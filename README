@@ -1,0 +1,81 @@
+Trimmed aggregates
+==================
+This PostgreSQL extension provides several aggregate functions that
+trim the input data set before applying the function, i.e. remove
+lowest/highest values. The number of values to be removed is configured
+using the parameters.
+
+WARNING: Those aggregates require the whole set, as they need to collect
+and sort the whole data set ((to trim low/high values). This may be
+a time consuming process and require a lot of memory. Keep this in mind
+when using those functions.
+
+
+Available aggregates
+--------------------
+The extension implements aggregates that resemble those described here:
+http://www.postgresql.org/docs/9.1/static/functions-aggregate.html, i.e.
+AVG, VARIANCE, VAR_POP, VAR_SAMP, STDDEV, STDDEV_POP and STDDEV_SAMP
+
+  == AVG ==
+  avg_trimmed(value numeric, low_cut float, high_cut float)
+  avg_trimmed(value numeric, both_cut float)
+
+  == VARIANCE ==
+  var_trimmed(value numeric, low_cut float, high_cut float);
+  var_trimmed(value numeric, both_cut float);
+
+  == VAR_POP (population variance) ==
+  var_pop_trimmed(value numeric, low_cut float, high_cut float)
+  var_pop_trimmed(value numeric, both_cut float)
+
+  == VAR_SAMP (sample variance) ==
+  var_samp_trimmed(value numeric, low_cut float, high_cut float)
+  var_samp_trimmed(value numeric, both_cut float)
+
+  == STDDEV (standard deviation) ==
+  stddev_trimmed(value numeric, low_cut float, high_cut float)
+  stddev_trimmed(value numeric, both_cut float)
+
+  == STDDEV_POP (population standard deviation) ==
+  stddev_pop_trimmed(value numeric, low_cut float, high_cut float)
+  stddev_pop_trimmed(value numeric, both_cut float)
+
+  == STDDEV_SAMP (sample standard deviation) ==
+  stddev_samp_trimmed(value numeric, low_cut float, high_cut float)
+  stddev_samp_trimmed(value numeric, both_cut float)
+
+
+Using the aggregates
+--------------------
+All the aggregates are used the same way so let's see how to use the
+avg_trimmed aggregate. For example this
+
+  SELECT avg_trimmed(i, 0.1) FROM generate_series(1,1000) s(i);
+
+means 10% of the values will be removed on both ends, and the average
+will be computed using the middle 80%.
+
+The more complicated version allows you to remove different number of
+lowest and highest values, so this
+
+  SELECT avg_trimmed(i, 0.2, 0.1) FROM generate_series(1,1000) s(i);
+
+means 20% of the lowest and 10% of the highest values will be removed,
+and the average will be computed using the remaining 70% of values.
+
+
+Installation
+------------
+Installing this is very simple - if you're on 9.1 you can install
+it like any other extension, i.e.
+
+  $ make install
+  $ psql dbname -c "CREATE EXTENSION trimmed_averages"
+
+and if you're on an older version, you have to run the SQL script
+manually
+
+  $ psql dbname < trimmed_averages--1.0.sql
+
+That's all.

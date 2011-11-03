@@ -1,0 +1,4 @@
+# trimmed aggregates
+comment = 'Provides trimmed aggregate functions.'
+default_version = '1.0'
+relocatable = true
