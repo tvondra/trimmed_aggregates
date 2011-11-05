@@ -18,51 +18,38 @@ http://www.postgresql.org/docs/9.1/static/functions-aggregate.html, i.e.
 AVG, VARIANCE, VAR_POP, VAR_SAMP, STDDEV, STDDEV_POP and STDDEV_SAMP
 
   == AVG ==
-  avg_trimmed(value numeric, low_cut float, high_cut float)
-  avg_trimmed(value numeric, both_cut float)
+
+  avg_trimmed(value, low_cut, high_cut)
 
   == VARIANCE ==
-  var_trimmed(value numeric, low_cut float, high_cut float);
-  var_trimmed(value numeric, both_cut float);
 
-  == VAR_POP (population variance) ==
-  var_pop_trimmed(value numeric, low_cut float, high_cut float)
-  var_pop_trimmed(value numeric, both_cut float)
-
-  == VAR_SAMP (sample variance) ==
-  var_samp_trimmed(value numeric, low_cut float, high_cut float)
-  var_samp_trimmed(value numeric, both_cut float)
+  var_trimmed(value, low_cut, high_cut);
+  var_pop_trimmed(value, low_cut, high_cut)
+  var_samp_trimmed(value, low_cut, high_cut)
 
   == STDDEV (standard deviation) ==
-  stddev_trimmed(value numeric, low_cut float, high_cut float)
-  stddev_trimmed(value numeric, both_cut float)
 
-  == STDDEV_POP (population standard deviation) ==
-  stddev_pop_trimmed(value numeric, low_cut float, high_cut float)
-  stddev_pop_trimmed(value numeric, both_cut float)
+  stddev_trimmed(value, low_cut, high_cut)
+  stddev_pop_trimmed(value, low_cut, high_cut)
+  stddev_samp_trimmed(value, low_cut, high_cut)
 
-  == STDDEV_SAMP (sample standard deviation) ==
-  stddev_samp_trimmed(value numeric, low_cut float, high_cut float)
-  stddev_samp_trimmed(value numeric, both_cut float)
-
+All those functions are overloaded for double precision, int32 and
+int64 data types.
 
 Using the aggregates
 --------------------
 All the aggregates are used the same way so let's see how to use the
 avg_trimmed aggregate. For example this
 
-  SELECT avg_trimmed(i, 0.1) FROM generate_series(1,1000) s(i);
+  SELECT avg_trimmed(i, 0.1, 0.1) FROM generate_series(1,1000) s(i);
 
 means 10% of the values will be removed on both ends, and the average
-will be computed using the middle 80%.
-
-The more complicated version allows you to remove different number of
-lowest and highest values, so this
+will be computed using the middle 80%. On the other hand this
 
   SELECT avg_trimmed(i, 0.2, 0.1) FROM generate_series(1,1000) s(i);
 
 means 20% of the lowest and 10% of the highest values will be removed,
-and the average will be computed using the remaining 70% of values.
+so the average will be computed using the remaining 70% of values.
 
 
 Installation

@@ -1,0 +1,34 @@
+{
+   "name": "trimmed_aggregates",
+   "abstract": "Aggregate for computing trimmed avg/stddev/var (with outliers removed).",
+   "description": "An extension written in C that allows you to remove outliers before computing the basic statistical aggregates (AVG/STDDEV/VARIANCE).",
+   "version": "1.0.0",
+   "maintainer": "Tomas Vondra <tv@fuzzy.cz>",
+   "license": "gpl_3",
+   "prereqs": {
+      "runtime": {
+         "requires": {
+            "PostgreSQL": "8.4.0"
+         }
+      }
+   },
+   "provides": {
+     "quantile": {
+       "file": "sql/trimmed_aggregates--1.0.sql",
+       "version": "1.0.0"
+     }
+   },
+   "resources": {
+      "repository": {
+        "url":  "https://tvondra@github.com/tvondra/trimmed_aggregates.git",
+        "web":  "http://github.com/tvondra/trimmed_aggregates",
+        "type": "git"
+      }
+   },
+   "tags" : ["aggregate", "outlier", "trimmed", "variance", "average", "sample", "estimate"],
+   "meta-spec": {
+      "version": "1.0.0",
+      "url": "http://pgxn.org/meta/spec.txt"
+   },
+   "release_status" : "testing"
+}
