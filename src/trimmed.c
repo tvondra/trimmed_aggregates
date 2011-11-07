@@ -319,7 +319,7 @@ trimmed_avg_double(PG_FUNCTION_ARGS)
     
     int     i;
     double  result = 0;
-    int     from, to;
+    int     from, to, cnt;
     
     struct_double * data;
     
@@ -331,6 +331,7 @@ trimmed_avg_double(PG_FUNCTION_ARGS)
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
+    cnt  = (to - from);
     
     if (from > to) {
         PG_RETURN_NULL();
@@ -339,7 +340,7 @@ trimmed_avg_double(PG_FUNCTION_ARGS)
     qsort(data->elements, data->next, sizeof(double), &double_comparator);
 
     for (i = from; i < to; i++) {
-        result = result + data->elements[i]/(to - from + 1);
+        result = result + data->elements[i]/cnt;
     }
     
     PG_RETURN_FLOAT8(result);
@@ -352,7 +353,7 @@ trimmed_avg_int32(PG_FUNCTION_ARGS)
     
     int     i;
     double  result = 0;
-    int     from, to;
+    int     from, to, cnt;
     
     struct_int32 * data;
     
@@ -364,6 +365,7 @@ trimmed_avg_int32(PG_FUNCTION_ARGS)
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
+    cnt  = (to - from);
     
     if (from > to) {
         PG_RETURN_NULL();
@@ -372,7 +374,7 @@ trimmed_avg_int32(PG_FUNCTION_ARGS)
     qsort(data->elements, data->next, sizeof(int32), &int32_comparator);
 
     for (i = from; i < to; i++) {
-        result = result + data->elements[i]/(to - from + 1);
+        result = result + ((double)data->elements[i])/cnt;
     }
     
     PG_RETURN_FLOAT8(result);
@@ -385,7 +387,7 @@ trimmed_avg_int64(PG_FUNCTION_ARGS)
     
     int     i;
     double  result = 0;
-    int     from, to;
+    int     from, to, cnt;
     
     struct_int64 * data;
     
@@ -397,6 +399,7 @@ trimmed_avg_int64(PG_FUNCTION_ARGS)
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
+    cnt  = (to - from);
     
     if (from > to) {
         PG_RETURN_NULL();
@@ -405,7 +408,7 @@ trimmed_avg_int64(PG_FUNCTION_ARGS)
     qsort(data->elements, data->next, sizeof(int64), &int64_comparator);
 
     for (i = from; i < to; i++) {
-        result = result + data->elements[i]/(to - from + 1);
+        result = result + ((double)data->elements[i])/cnt;
     }
     
     PG_RETURN_FLOAT8(result);
