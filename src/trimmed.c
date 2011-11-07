@@ -18,6 +18,14 @@
 PG_MODULE_MAGIC;
 #endif
 
+#if __WORDSIZE == 64
+#define GET_POINTER(a,b)    (a*)(b)
+#define GET_INTEGER(a)      ((int64)a)
+#else
+#define GET_POINTER(a,b)    (a*)((int32)b)
+#define GET_INTEGER(a)      ((int32)a)
+#endif
+
 #define SLICE_SIZE 1024
 
 /* Structures used to keep the data - the 'elements' array is extended
@@ -175,7 +183,7 @@ trimmed_append_double(PG_FUNCTION_ARGS)
         data->cut_upper = PG_GETARG_FLOAT8(3);
         
     } else {
-        data = (struct_double*)PG_GETARG_INT64(0);
+        data = GET_POINTER(struct_double, PG_GETARG_INT64(0));
     }
     
     if (! PG_ARGISNULL(1)) {
@@ -192,7 +200,7 @@ trimmed_append_double(PG_FUNCTION_ARGS)
     
     MemoryContextSwitchTo(oldcontext);
     
-    PG_RETURN_INT64((int64)data);
+    PG_RETURN_INT64(GET_INTEGER(data));
 
 }
 
@@ -218,7 +226,7 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
         data->cut_upper = PG_GETARG_FLOAT8(3);
         
     } else {
-        data = (struct_int32*)PG_GETARG_INT64(0);
+        data = GET_POINTER(struct_int32, PG_GETARG_INT64(0));
     }
     
     if (! PG_ARGISNULL(1)) {
@@ -236,7 +244,7 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
     
     MemoryContextSwitchTo(oldcontext);
     
-    PG_RETURN_INT64((int64)data);
+    PG_RETURN_INT64(GET_INTEGER(data));
 
 }
 
@@ -262,7 +270,7 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
         data->cut_upper = PG_GETARG_FLOAT8(3);
         
     } else {
-        data = (struct_int64*)PG_GETARG_INT64(0);
+        data = GET_POINTER(struct_int64, PG_GETARG_INT64(0));
     }
 
     if (! PG_ARGISNULL(1)) {
@@ -280,7 +288,7 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
     
     MemoryContextSwitchTo(oldcontext);
     
-    PG_RETURN_INT64((int64)data);
+    PG_RETURN_INT64(GET_INTEGER(data));
 
 }
 
@@ -298,7 +306,7 @@ trimmed_avg_double(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_double*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_double, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -331,7 +339,7 @@ trimmed_avg_int32(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_int32*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_int32, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -364,7 +372,7 @@ trimmed_avg_int64(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_int64*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_int64, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -398,7 +406,7 @@ trimmed_var_double(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_double*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_double, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -437,7 +445,7 @@ trimmed_var_int32(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_int32*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_int32, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -476,7 +484,7 @@ trimmed_var_int64(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_int64*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_int64, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -515,7 +523,7 @@ trimmed_var_pop_double(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_double*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_double, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -551,7 +559,7 @@ trimmed_var_pop_int32(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_int32*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_int32, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -587,7 +595,7 @@ trimmed_var_pop_int64(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_int64*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_int64, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -623,7 +631,7 @@ trimmed_var_samp_double(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_double*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_double, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -659,7 +667,7 @@ trimmed_var_samp_int32(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_int32*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_int32, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -695,7 +703,7 @@ trimmed_var_samp_int64(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_int64*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_int64, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -731,7 +739,7 @@ trimmed_stddev_double(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_double*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_double, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -770,7 +778,7 @@ trimmed_stddev_int32(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_int32*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_int32, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -809,7 +817,7 @@ trimmed_stddev_int64(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_int64*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_int64, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -849,7 +857,7 @@ trimmed_stddev_pop_double(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_double*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_double, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -885,7 +893,7 @@ trimmed_stddev_pop_int32(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_int32*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_int32, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -921,7 +929,7 @@ trimmed_stddev_pop_int64(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_int64*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_int64, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -957,7 +965,7 @@ trimmed_stddev_samp_double(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_double*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_double, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -993,7 +1001,7 @@ trimmed_stddev_samp_int32(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_int32*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_int32, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
@@ -1029,7 +1037,7 @@ trimmed_stddev_samp_int64(PG_FUNCTION_ARGS)
         PG_RETURN_NULL();
     }
     
-    data = (struct_int64*)PG_GETARG_INT64(0);
+    data = GET_POINTER(struct_int64, PG_GETARG_INT64(0));
     
     from = floor(data->next * data->cut_lower);
     to   = data->next - floor(data->next * data->cut_upper);
