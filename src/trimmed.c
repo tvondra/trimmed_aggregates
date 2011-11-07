@@ -169,7 +169,14 @@ trimmed_append_double(PG_FUNCTION_ARGS)
     
     double element;
     
-    MemoryContext oldcontext = MemoryContextSwitchTo(CurrentMemoryContext->parent);
+    MemoryContext oldcontext;
+    MemoryContext aggcontext;
+
+    if (! AggCheckCallContext(fcinfo, &aggcontext)) {
+        elog(ERROR, "quantile_append_double called in non-aggregate context");
+    }
+
+    oldcontext = MemoryContextSwitchTo(aggcontext);
         
     if (PG_ARGISNULL(0)) {
         
@@ -212,7 +219,14 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
     
     int32 element;
     
-    MemoryContext oldcontext = MemoryContextSwitchTo(CurrentMemoryContext->parent);
+    MemoryContext oldcontext;
+    MemoryContext aggcontext;
+
+    if (! AggCheckCallContext(fcinfo, &aggcontext)) {
+        elog(ERROR, "quantile_append_double called in non-aggregate context");
+    }
+
+    oldcontext = MemoryContextSwitchTo(aggcontext);
         
     if (PG_ARGISNULL(0)) {
         
@@ -256,7 +270,14 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
     
     int64 element;
     
-    MemoryContext oldcontext = MemoryContextSwitchTo(CurrentMemoryContext->parent);
+    MemoryContext oldcontext;
+    MemoryContext aggcontext;
+
+    if (! AggCheckCallContext(fcinfo, &aggcontext)) {
+        elog(ERROR, "quantile_append_double called in non-aggregate context");
+    }
+
+    oldcontext = MemoryContextSwitchTo(aggcontext);
         
     if (PG_ARGISNULL(0)) {
         
