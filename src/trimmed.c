@@ -26,6 +26,11 @@ PG_MODULE_MAGIC;
 #define GET_INTEGER(a)      ((int32)a)
 #endif
 
+#define GET_AGG_CONTEXT(fname, fcinfo, aggcontext)  \
+    if (! AggCheckCallContext(fcinfo, &aggcontext)) {   \
+        elog(ERROR, "%s called in non-aggregate context", fname);  \
+    }
+
 #define SLICE_SIZE 1024
 
 /* Structures used to keep the data - the 'elements' array is extended
@@ -171,11 +176,9 @@ trimmed_append_double(PG_FUNCTION_ARGS)
     
     MemoryContext oldcontext;
     MemoryContext aggcontext;
-
-    if (! AggCheckCallContext(fcinfo, &aggcontext)) {
-        elog(ERROR, "quantile_append_double called in non-aggregate context");
-    }
-
+    
+    GET_AGG_CONTEXT("quantile_append_double", fcinfo, aggcontext);
+    
     oldcontext = MemoryContextSwitchTo(aggcontext);
         
     if (PG_ARGISNULL(0)) {
@@ -221,10 +224,8 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
     
     MemoryContext oldcontext;
     MemoryContext aggcontext;
-
-    if (! AggCheckCallContext(fcinfo, &aggcontext)) {
-        elog(ERROR, "quantile_append_double called in non-aggregate context");
-    }
+    
+    GET_AGG_CONTEXT("quantile_append_int32", fcinfo, aggcontext);
 
     oldcontext = MemoryContextSwitchTo(aggcontext);
         
@@ -272,10 +273,8 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
     
     MemoryContext oldcontext;
     MemoryContext aggcontext;
-
-    if (! AggCheckCallContext(fcinfo, &aggcontext)) {
-        elog(ERROR, "quantile_append_double called in non-aggregate context");
-    }
+    
+    GET_AGG_CONTEXT("quantile_append_64", fcinfo, aggcontext);
 
     oldcontext = MemoryContextSwitchTo(aggcontext);
         
@@ -323,6 +322,10 @@ trimmed_avg_double(PG_FUNCTION_ARGS)
     
     struct_double * data;
     
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_avg_double", fcinfo, aggcontext);
+    
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
     }
@@ -356,6 +359,10 @@ trimmed_avg_int32(PG_FUNCTION_ARGS)
     int     from, to, cnt;
     
     struct_int32 * data;
+    
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_avg_int32", fcinfo, aggcontext);
     
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
@@ -391,6 +398,10 @@ trimmed_avg_int64(PG_FUNCTION_ARGS)
     
     struct_int64 * data;
     
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_avg_int64", fcinfo, aggcontext);
+    
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
     }
@@ -425,6 +436,10 @@ trimmed_var_double(PG_FUNCTION_ARGS)
     int     from, to, cnt;
     
     struct_double * data;
+    
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_var_double", fcinfo, aggcontext);
     
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
@@ -465,6 +480,10 @@ trimmed_var_int32(PG_FUNCTION_ARGS)
     
     struct_int32 * data;
     
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_var_int32", fcinfo, aggcontext);
+    
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
     }
@@ -503,6 +522,10 @@ trimmed_var_int64(PG_FUNCTION_ARGS)
     int     from, to, cnt;
     
     struct_int64 * data;
+    
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_var_int64", fcinfo, aggcontext);
     
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
@@ -543,6 +566,10 @@ trimmed_var_pop_double(PG_FUNCTION_ARGS)
     
     struct_double * data;
     
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_var_pop_double", fcinfo, aggcontext);
+    
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
     }
@@ -578,6 +605,10 @@ trimmed_var_pop_int32(PG_FUNCTION_ARGS)
     
     
     struct_int32 * data;
+    
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_var_pop_int32", fcinfo, aggcontext);
     
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
@@ -615,6 +646,10 @@ trimmed_var_pop_int64(PG_FUNCTION_ARGS)
     
     struct_int64 * data;
     
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_var_pop_int64", fcinfo, aggcontext);
+    
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
     }
@@ -650,6 +685,10 @@ trimmed_var_samp_double(PG_FUNCTION_ARGS)
     
     
     struct_double * data;
+    
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_var_samp_double", fcinfo, aggcontext);
     
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
@@ -687,6 +726,10 @@ trimmed_var_samp_int32(PG_FUNCTION_ARGS)
     
     struct_int32 * data;
     
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_var_samp_int32", fcinfo, aggcontext);
+    
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
     }
@@ -723,6 +766,10 @@ trimmed_var_samp_int64(PG_FUNCTION_ARGS)
     
     struct_int64 * data;
     
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_var_samp_int64", fcinfo, aggcontext);
+    
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
     }
@@ -758,6 +805,10 @@ trimmed_stddev_double(PG_FUNCTION_ARGS)
     int     from, to, cnt;
     
     struct_double * data;
+    
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_stddev_double", fcinfo, aggcontext);
     
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
@@ -798,6 +849,10 @@ trimmed_stddev_int32(PG_FUNCTION_ARGS)
     
     struct_int32 * data;
     
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_stddev_int32", fcinfo, aggcontext);
+    
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
     }
@@ -836,6 +891,10 @@ trimmed_stddev_int64(PG_FUNCTION_ARGS)
     int     from, to, cnt;
     
     struct_int64 * data;
+    
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_stddev_int64", fcinfo, aggcontext);
     
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
@@ -877,6 +936,10 @@ trimmed_stddev_pop_double(PG_FUNCTION_ARGS)
     
     struct_double * data;
     
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_stddev_pop_double", fcinfo, aggcontext);
+    
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
     }
@@ -912,6 +975,10 @@ trimmed_stddev_pop_int32(PG_FUNCTION_ARGS)
     
     
     struct_int32 * data;
+    
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_stddev_pop_int32", fcinfo, aggcontext);
     
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
@@ -949,6 +1016,10 @@ trimmed_stddev_pop_int64(PG_FUNCTION_ARGS)
     
     struct_int64 * data;
     
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_stddev_pop_int64", fcinfo, aggcontext);
+    
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
     }
@@ -984,6 +1055,10 @@ trimmed_stddev_samp_double(PG_FUNCTION_ARGS)
     
     
     struct_double * data;
+    
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_stddev_samp_double", fcinfo, aggcontext);
     
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
@@ -1021,6 +1096,10 @@ trimmed_stddev_samp_int32(PG_FUNCTION_ARGS)
     
     struct_int32 * data;
     
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_stddev_samp_int32", fcinfo, aggcontext);
+    
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
     }
@@ -1056,6 +1135,10 @@ trimmed_stddev_samp_int64(PG_FUNCTION_ARGS)
     
     
     struct_int64 * data;
+    
+    MemoryContext aggcontext;
+    
+    GET_AGG_CONTEXT("trimmed_stddev_samp_int64", fcinfo, aggcontext);
     
     if (PG_ARGISNULL(0)) {
         PG_RETURN_NULL();
