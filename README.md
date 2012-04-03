@@ -33,8 +33,12 @@ AVG, VARIANCE, VAR_POP, VAR_SAMP, STDDEV, STDDEV_POP and STDDEV_SAMP
         stddev_pop_trimmed(value, low_cut, high_cut)
         stddev_samp_trimmed(value, low_cut, high_cut)
 
-All those functions are overloaded for double precision, int32 and
-int64 data types.
+* combined aggregate (computes all seven values at once)
+
+        trimmed(value, low_cut, high_cut)
+
+All those functions are overloaded for numeric, double precision, int32
+and int64 data types.
 
 Using the aggregates
 --------------------
@@ -51,6 +55,20 @@ will be computed using the middle 80%. On the other hand this
 means 20% of the lowest and 10% of the highest values will be removed,
 so the average will be computed using the remaining 70% of values.
 
+The combined aggregate computes and returns all values at once as an
+array. The values are stored in this order
+
+* average
+* var_pop
+* var_samp
+* variance
+* stddev_pop
+* stddev_samp
+* stddev
+
+If you need more of the values at once this may be much more efficient
+as it shares the memory and can compute the values with only two passes
+through the data (to compute exact variance and stddev).
 
 Installation
 ------------
