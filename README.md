@@ -17,21 +17,21 @@ The extension implements aggregates that resemble those described here:
 http://www.postgresql.org/docs/9.1/static/functions-aggregate.html, i.e.
 AVG, VARIANCE, VAR_POP, VAR_SAMP, STDDEV, STDDEV_POP and STDDEV_SAMP
 
-  == AVG ==
+* AVG
 
-  avg_trimmed(value, low_cut, high_cut)
+        avg_trimmed(value, low_cut, high_cut)
 
-  == VARIANCE ==
+* VARIANCE
 
-  var_trimmed(value, low_cut, high_cut);
-  var_pop_trimmed(value, low_cut, high_cut)
-  var_samp_trimmed(value, low_cut, high_cut)
+        var_trimmed(value, low_cut, high_cut);
+        var_pop_trimmed(value, low_cut, high_cut)
+        var_samp_trimmed(value, low_cut, high_cut)
 
-  == STDDEV (standard deviation) ==
+* STDDEV (standard deviation)
 
-  stddev_trimmed(value, low_cut, high_cut)
-  stddev_pop_trimmed(value, low_cut, high_cut)
-  stddev_samp_trimmed(value, low_cut, high_cut)
+        stddev_trimmed(value, low_cut, high_cut)
+        stddev_pop_trimmed(value, low_cut, high_cut)
+        stddev_samp_trimmed(value, low_cut, high_cut)
 
 All those functions are overloaded for double precision, int32 and
 int64 data types.
@@ -41,12 +41,12 @@ Using the aggregates
 All the aggregates are used the same way so let's see how to use the
 avg_trimmed aggregate. For example this
 
-  SELECT avg_trimmed(i, 0.1, 0.1) FROM generate_series(1,1000) s(i);
+    SELECT avg_trimmed(i, 0.1, 0.1) FROM generate_series(1,1000) s(i);
 
 means 10% of the values will be removed on both ends, and the average
 will be computed using the middle 80%. On the other hand this
 
-  SELECT avg_trimmed(i, 0.2, 0.1) FROM generate_series(1,1000) s(i);
+    SELECT avg_trimmed(i, 0.2, 0.1) FROM generate_series(1,1000) s(i);
 
 means 20% of the lowest and 10% of the highest values will be removed,
 so the average will be computed using the remaining 70% of values.
@@ -57,18 +57,19 @@ Installation
 Installing this is very simple - if you're on 9.1 you can install
 it like any other extension, i.e.
 
-  $ make install
-  $ psql dbname -c "CREATE EXTENSION trimmed_averages"
+    $ make install
+    $ psql dbname -c "CREATE EXTENSION trimmed_averages"
 
 and if you're on an older version, you have to run the SQL script
 manually
 
-  $ psql dbname < trimmed_averages--1.0.sql
+    $ psql dbname < trimmed_averages--1.0.sql
 
 That's all.
 
 
 License
 -------
-This software is distributed under the terms of GPL v3 license. See
-LICENSE or http://www.gnu.org/copyleft/gpl.html for more details.
+This software is distributed under the terms of BSD 2-clause license.
+See LICENSE or http://www.opensource.org/licenses/bsd-license.php for
+more details.
