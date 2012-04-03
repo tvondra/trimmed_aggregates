@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 #include "postgres.h"
+#include "utils/datum.h"
 #include "utils/palloc.h"
 #include "utils/array.h"
 #include "utils/lsyscache.h"
@@ -412,7 +413,7 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
             data->nelements = data->nelements + SLICE_SIZE;
         }
         
-        data->elements[data->next++] = element;
+        data->elements[data->next++] = DatumGetNumeric(datumCopy(NumericGetDatum(element), false, -1));
         
     }
     
