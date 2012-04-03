@@ -1,0 +1,180 @@
+BEGIN;
+CREATE EXTENSION trimmed_aggregates;
+-- the regression tests round the values a bit so that rounding errors don't trigger failures
+-- wrapper to handle rounding for double precision values
+CREATE OR REPLACE FUNCTION round(p_val double precision, p_digits int) RETURNS double precision AS $$
+    SELECT round($1 * pow(10,$2)) / pow(10,$2);
+$$ LANGUAGE sql;
+-- int
+SELECT round(avg_trimmed(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+ round 
+-------
+ 500.5
+(1 row)
+
+SELECT round(var_trimmed(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+  round   
+----------
+ 53333.25
+(1 row)
+
+SELECT round(var_pop_trimmed(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+  round   
+----------
+ 53333.25
+(1 row)
+
+SELECT round(var_samp_trimmed(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+ round 
+-------
+ 53400
+(1 row)
+
+SELECT round(stddev_trimmed(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+ round  
+--------
+ 230.94
+(1 row)
+
+SELECT round(stddev_pop_trimmed(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+ round  
+--------
+ 230.94
+(1 row)
+
+SELECT round(stddev_samp_trimmed(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+  round  
+---------
+ 231.084
+(1 row)
+
+-- bigint
+SELECT round(avg_trimmed(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+ round 
+-------
+ 500.5
+(1 row)
+
+SELECT round(var_trimmed(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+  round   
+----------
+ 53333.25
+(1 row)
+
+SELECT round(var_pop_trimmed(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+  round   
+----------
+ 53333.25
+(1 row)
+
+SELECT round(var_samp_trimmed(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+ round 
+-------
+ 53400
+(1 row)
+
+SELECT round(stddev_trimmed(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+ round  
+--------
+ 230.94
+(1 row)
+
+SELECT round(stddev_pop_trimmed(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+ round  
+--------
+ 230.94
+(1 row)
+
+SELECT round(stddev_samp_trimmed(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+  round  
+---------
+ 231.084
+(1 row)
+
+-- double precision
+SELECT round(avg_trimmed(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+ round 
+-------
+ 500.5
+(1 row)
+
+SELECT round(var_trimmed(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+  round   
+----------
+ 53333.25
+(1 row)
+
+SELECT round(var_pop_trimmed(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+  round   
+----------
+ 53333.25
+(1 row)
+
+SELECT round(var_samp_trimmed(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+ round 
+-------
+ 53400
+(1 row)
+
+SELECT round(stddev_trimmed(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+ round  
+--------
+ 230.94
+(1 row)
+
+SELECT round(stddev_pop_trimmed(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+ round  
+--------
+ 230.94
+(1 row)
+
+SELECT round(stddev_samp_trimmed(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+  round  
+---------
+ 231.084
+(1 row)
+
+-- numeric
+SELECT round(avg_trimmed(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+  round  
+---------
+ 500.500
+(1 row)
+
+SELECT round(var_trimmed(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+   round   
+-----------
+ 53333.250
+(1 row)
+
+SELECT round(var_pop_trimmed(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+   round   
+-----------
+ 53333.250
+(1 row)
+
+SELECT round(var_samp_trimmed(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+   round   
+-----------
+ 53400.000
+(1 row)
+
+SELECT round(stddev_trimmed(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+  round  
+---------
+ 230.940
+(1 row)
+
+SELECT round(stddev_pop_trimmed(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+  round  
+---------
+ 230.940
+(1 row)
+
+SELECT round(stddev_samp_trimmed(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+  round  
+---------
+ 231.084
+(1 row)
+
+ROLLBACK;
