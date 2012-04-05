@@ -4,7 +4,7 @@
    "description": "An extension written in C that allows you to remove outliers before computing the basic statistical aggregates (AVG/STDDEV/VARIANCE).",
    "version": "1.2.0",
    "maintainer": "Tomas Vondra <tv@fuzzy.cz>",
-   "license": "gpl_3",
+   "license": "bsd",
    "prereqs": {
       "runtime": {
          "requires": {
