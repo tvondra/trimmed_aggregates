@@ -72,14 +72,19 @@ through the data (to compute exact variance and stddev).
 
 Installation
 ------------
-Installing this is very simple - if you're on 9.1 you can install
-it like any other extension, i.e.
+Installing this extension is very simple - if you're using pgxn client
+(and you should), just do this:
+
+    $ pgxn install --testing trimmed_aggregates
+    $ pgxn load --testing -d mydb trimmed_aggregates
+
+You can also install manually, just it like any other extension, i.e.
 
     $ make install
     $ psql dbname -c "CREATE EXTENSION trimmed_averages"
 
-and if you're on an older version, you have to run the SQL script
-manually
+And if you're on an older PostgreSQL version, you have to run the SQL
+script manually (use the proper version).
 
     $ psql dbname < trimmed_averages--1.0.sql
 
