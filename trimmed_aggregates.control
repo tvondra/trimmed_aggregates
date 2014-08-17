@@ -1,4 +1,4 @@
 # trimmed aggregates
 comment = 'Provides trimmed aggregate functions.'
-default_version = '1.2.1'
+default_version = '1.2.2'
 relocatable = true
