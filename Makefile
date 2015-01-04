@@ -2,7 +2,7 @@ MODULE_big = trimmed_aggregates
 OBJS = src/trimmed.o
 
 EXTENSION = trimmed_aggregates
-DATA = sql/trimmed_aggregates--1.0.sql sql/trimmed_aggregates--1.1.sql sql/trimmed_aggregates--1.2.sql sql/trimmed_aggregates--1.2.2.sql
+DATA = sql/trimmed_aggregates--1.0.sql sql/trimmed_aggregates--1.1.sql sql/trimmed_aggregates--1.2.sql sql/trimmed_aggregates--1.2.2.sql sql/trimmed_aggregates--1.3.0.sql
 MODULES = trimmed_aggregates
 
 CFLAGS=`pg_config --includedir-server`
