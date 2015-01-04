@@ -1,5 +1,12 @@
+\set ECHO 0
 BEGIN;
-CREATE EXTENSION trimmed_aggregates;
+
+-- disable the notices for the create script (shell types etc.)
+SET client_min_messages = 'WARNING';
+\i sql/trimmed_aggregates--1.2.2.sql
+SET client_min_messages = 'NOTICE';
+
+\set ECHO all
 
 -- the regression tests round the values a bit so that rounding errors don't trigger failures
 -- wrapper to handle rounding for double precision values
