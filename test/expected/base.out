@@ -1,4 +1,4 @@
-\set ECHO 0
+\set ECHO none
 -- the regression tests round the values a bit so that rounding errors don't trigger failures
 -- wrapper to handle rounding for double precision values
 CREATE OR REPLACE FUNCTION round(p_val double precision, p_digits int) RETURNS double precision AS $$

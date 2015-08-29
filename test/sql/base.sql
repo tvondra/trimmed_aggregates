@@ -1,9 +1,9 @@
-\set ECHO 0
+\set ECHO none
 BEGIN;
 
 -- disable the notices for the create script (shell types etc.)
 SET client_min_messages = 'WARNING';
-\i sql/trimmed_aggregates--1.3.1.sql
+\i sql/trimmed_aggregates--1.3.2.sql
 SET client_min_messages = 'NOTICE';
 
 \set ECHO all
