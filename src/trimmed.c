@@ -309,17 +309,19 @@ trimmed_append_double(PG_FUNCTION_ARGS)
 	state_double * data;
 	double element;
 
-	MemoryContext oldcontext;
 	MemoryContext aggcontext;
 
-	GET_AGG_CONTEXT("quantile_append_double", fcinfo, aggcontext);
-
-	oldcontext = MemoryContextSwitchTo(aggcontext);
+	GET_AGG_CONTEXT("trimmed_append_double", fcinfo, aggcontext);
 
 	if (PG_ARGISNULL(0))
 	{
+		MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
+
 		data = (state_double*)palloc(sizeof(state_double));
 		data->elements  = (double*)palloc(SLICE_SIZE*sizeof(double));
+
+		MemoryContextSwitchTo(oldcontext);
+
 		data->maxelements = SLICE_SIZE;
 		data->nelements = 0;
 
@@ -342,8 +344,6 @@ trimmed_append_double(PG_FUNCTION_ARGS)
 		data->elements[data->nelements++] = element;
 	}
 
-	MemoryContextSwitchTo(oldcontext);
-
 	PG_RETURN_POINTER(data);
 }
 
@@ -353,17 +353,19 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
 	state_int32 * data;
 	int32 element;
 
-	MemoryContext oldcontext;
 	MemoryContext aggcontext;
 
-	GET_AGG_CONTEXT("quantile_append_int32", fcinfo, aggcontext);
-
-	oldcontext = MemoryContextSwitchTo(aggcontext);
+	GET_AGG_CONTEXT("trimmed_append_int32", fcinfo, aggcontext);
 
 	if (PG_ARGISNULL(0))
 	{
+		MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
+
 		data = (state_int32*)palloc(sizeof(state_int32));
 		data->elements  = (int32*)palloc(SLICE_SIZE*sizeof(int32));
+
+		MemoryContextSwitchTo(oldcontext);
+
 		data->maxelements = SLICE_SIZE;
 		data->nelements = 0;
 
@@ -386,8 +388,6 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
 		data->elements[data->nelements++] = element;
 	}
 
-	MemoryContextSwitchTo(oldcontext);
-
 	PG_RETURN_POINTER(data);
 }
 
@@ -397,17 +397,19 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
 	state_int64 * data;
 	int64 element;
 
-	MemoryContext oldcontext;
 	MemoryContext aggcontext;
 
-	GET_AGG_CONTEXT("quantile_append_64", fcinfo, aggcontext);
-
-	oldcontext = MemoryContextSwitchTo(aggcontext);
+	GET_AGG_CONTEXT("trimmed_append_int64", fcinfo, aggcontext);
 
 	if (PG_ARGISNULL(0))
 	{
+		MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
+
 		data = (state_int64*)palloc(sizeof(state_int64));
 		data->elements  = (int64*)palloc(SLICE_SIZE*sizeof(int64));
+
+		MemoryContextSwitchTo(oldcontext);
+
 		data->maxelements = SLICE_SIZE;
 		data->nelements = 0;
 
@@ -430,8 +432,6 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
 		data->elements[data->nelements++] = element;
 	}
 
-	MemoryContextSwitchTo(oldcontext);
-
 	PG_RETURN_POINTER(data);
 }
 
@@ -441,17 +441,19 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 	state_numeric * data;
 	Numeric element;
 
-	MemoryContext oldcontext;
 	MemoryContext aggcontext;
 
 	GET_AGG_CONTEXT("trimmed_append_numeric", fcinfo, aggcontext);
 
-	oldcontext = MemoryContextSwitchTo(aggcontext);
-
 	if (PG_ARGISNULL(0))
 	{
+		MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
+
 		data = (state_numeric*)palloc(sizeof(state_numeric));
 		data->elements  = (Numeric*)palloc(SLICE_SIZE*sizeof(Numeric));
+
+		MemoryContextSwitchTo(oldcontext);
+
 		data->maxelements = SLICE_SIZE;
 		data->nelements = 0;
 
@@ -473,8 +475,6 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 
 		data->elements[data->nelements++] = DatumGetNumeric(datumCopy(NumericGetDatum(element), false, -1));
 	}
-
-	MemoryContextSwitchTo(oldcontext);
 
 	PG_RETURN_POINTER(data);
 }
