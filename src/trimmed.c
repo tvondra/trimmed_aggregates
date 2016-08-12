@@ -1381,7 +1381,7 @@ trimmed_var_int32(PG_FUNCTION_ARGS)
 Datum
 trimmed_var_int64(PG_FUNCTION_ARGS)
 {
-	int		i, from, to, cnt
+	int		i, from, to, cnt;
 	double	result = 0, avg = 0;
 
 	state_int64 * data;
