@@ -629,7 +629,7 @@ trimmed_deserial_double(PG_FUNCTION_ARGS)
 	CHECK_AGG_CONTEXT("trimmed_deserial_double", fcinfo);
 
 	Assert(len > 0);
-	Assert(len % sizeof(double) == 0);
+	Assert((len - offsetof(state_double, elements)) % sizeof(double) == 0);
 
 	/* copy the header */
 	memcpy(out, ptr, offsetof(state_double, elements));
@@ -657,7 +657,7 @@ trimmed_deserial_int32(PG_FUNCTION_ARGS)
 	CHECK_AGG_CONTEXT("trimmed_deserial_int32", fcinfo);
 
 	Assert(len > 0);
-	Assert(len % sizeof(int32) == 0);
+	Assert((len - offsetof(state_int32, elements)) % sizeof(int32) == 0);
 
 	/* copy the header */
 	memcpy(out, ptr, offsetof(state_int32, elements));
@@ -685,7 +685,7 @@ trimmed_deserial_int64(PG_FUNCTION_ARGS)
 	CHECK_AGG_CONTEXT("trimmed_deserial_int64", fcinfo);
 
 	Assert(len > 0);
-	Assert(len % sizeof(int64) == 0);
+	Assert((len - offsetof(state_int64, elements)) % sizeof(int32) == 0);
 
 	/* copy the header */
 	memcpy(out, ptr, offsetof(state_int64, elements));
