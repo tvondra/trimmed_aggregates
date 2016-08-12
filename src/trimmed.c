@@ -464,7 +464,7 @@ trimmed_serial_double(PG_FUNCTION_ARGS)
 	state_double  *data = (state_double *)PG_GETARG_POINTER(0);
 	Size			hlen = offsetof(state_double, elements);	/* header */
 	Size			len = data->nelements * sizeof(double);			/* elements */
-	bytea		   *out = (bytea *)palloc(VARHDRSZ + len) + hlen;
+	bytea		   *out = (bytea *)palloc(VARHDRSZ + len + hlen);
 	char		   *ptr;
 
 	CHECK_AGG_CONTEXT("trimmed_serial_double", fcinfo);
