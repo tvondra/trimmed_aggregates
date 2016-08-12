@@ -442,6 +442,7 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 
 	if (! PG_ARGISNULL(1))
 	{
+		MemoryContext oldcontext;
 		Numeric element = PG_GETARG_NUMERIC(1);
 
 		if (data->nelements >= data->maxelements)
@@ -451,8 +452,12 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 												sizeof(Numeric) * data->maxelements);
 		}
 
+		oldcontext = MemoryContextSwitchTo(aggcontext);
+
 		data->elements[data->nelements++]
 			= DatumGetNumeric(datumCopy(NumericGetDatum(element), false, -1));
+
+		MemoryContextSwitchTo(oldcontext);
 	}
 
 	PG_RETURN_POINTER(data);
