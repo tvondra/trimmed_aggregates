@@ -87,8 +87,8 @@ PG_MODULE_MAGIC;
 
 typedef struct struct_double {
 
+    int maxelements;
     int nelements;
-    int next;
 
     double cut_lower;
     double cut_upper;
@@ -99,8 +99,8 @@ typedef struct struct_double {
 
 typedef struct struct_int32 {
 
+    int maxelements;
     int nelements;
-    int next;
 
     double cut_lower;
     double cut_upper;
@@ -111,8 +111,8 @@ typedef struct struct_int32 {
 
 typedef struct struct_int64 {
 
+    int maxelements;
     int nelements;
-    int next;
 
     double cut_lower;
     double cut_upper;
@@ -123,8 +123,8 @@ typedef struct struct_int64 {
 
 typedef struct struct_numeric {
 
+    int maxelements;
     int nelements;
-    int next;
 
     double cut_lower;
     double cut_upper;
@@ -326,8 +326,8 @@ trimmed_append_double(PG_FUNCTION_ARGS)
 
         data = (struct_double*)palloc(sizeof(struct_double));
         data->elements  = (double*)palloc(SLICE_SIZE*sizeof(double));
-        data->nelements = SLICE_SIZE;
-        data->next = 0;
+        data->maxelements = SLICE_SIZE;
+        data->nelements = 0;
 
         /* how much to cut */
         data->cut_lower = PG_GETARG_FLOAT8(2);
@@ -341,12 +341,12 @@ trimmed_append_double(PG_FUNCTION_ARGS)
 
         element = PG_GETARG_FLOAT8(1);
 
-        if (data->next > data->nelements-1) {
-            data->elements = (double*)repalloc(data->elements, sizeof(double)*(data->nelements + SLICE_SIZE));
-            data->nelements = data->nelements + SLICE_SIZE;
+        if (data->nelements > data->maxelements-1) {
+            data->elements = (double*)repalloc(data->elements, sizeof(double)*(data->maxelements + SLICE_SIZE));
+            data->maxelements = data->maxelements + SLICE_SIZE;
         }
 
-        data->elements[data->next++] = element;
+        data->elements[data->nelements++] = element;
     }
 
     MemoryContextSwitchTo(oldcontext);
@@ -374,8 +374,8 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
 
         data = (struct_int32*)palloc(sizeof(struct_int32));
         data->elements  = (int32*)palloc(SLICE_SIZE*sizeof(int32));
-        data->nelements = SLICE_SIZE;
-        data->next = 0;
+        data->maxelements = SLICE_SIZE;
+        data->nelements = 0;
 
         /* how much to cut */
         data->cut_lower = PG_GETARG_FLOAT8(2);
@@ -389,12 +389,12 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
 
         element = PG_GETARG_INT32(1);
 
-        if (data->next > data->nelements-1) {
-            data->elements = (int32*)repalloc(data->elements, sizeof(int32)*(data->nelements + SLICE_SIZE));
-            data->nelements = data->nelements + SLICE_SIZE;
+        if (data->nelements > data->maxelements-1) {
+            data->elements = (int32*)repalloc(data->elements, sizeof(int32)*(data->maxelements + SLICE_SIZE));
+            data->maxelements = data->maxelements + SLICE_SIZE;
         }
 
-        data->elements[data->next++] = element;
+        data->elements[data->nelements++] = element;
 
     }
 
@@ -423,8 +423,8 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
 
         data = (struct_int64*)palloc(sizeof(struct_int64));
         data->elements  = (int64*)palloc(SLICE_SIZE*sizeof(int64));
-        data->nelements = SLICE_SIZE;
-        data->next = 0;
+        data->maxelements = SLICE_SIZE;
+        data->nelements = 0;
 
         /* how much to cut */
         data->cut_lower = PG_GETARG_FLOAT8(2);
@@ -438,12 +438,12 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
 
         element = PG_GETARG_INT64(1);
 
-        if (data->next > data->nelements-1) {
-            data->elements = (int64*)repalloc(data->elements, sizeof(int64)*(data->nelements + SLICE_SIZE));
-            data->nelements = data->nelements + SLICE_SIZE;
+        if (data->nelements > data->maxelements-1) {
+            data->elements = (int64*)repalloc(data->elements, sizeof(int64)*(data->maxelements + SLICE_SIZE));
+            data->maxelements = data->maxelements + SLICE_SIZE;
         }
 
-        data->elements[data->next++] = element;
+        data->elements[data->nelements++] = element;
 
     }
 
@@ -472,8 +472,8 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 
         data = (struct_numeric*)palloc(sizeof(struct_numeric));
         data->elements  = (Numeric*)palloc(SLICE_SIZE*sizeof(Numeric));
-        data->nelements = SLICE_SIZE;
-        data->next = 0;
+        data->maxelements = SLICE_SIZE;
+        data->nelements = 0;
 
         /* how much to cut */
         data->cut_lower = PG_GETARG_FLOAT8(2);
@@ -487,12 +487,12 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 
         element = PG_GETARG_NUMERIC(1);
 
-        if (data->next > data->nelements-1) {
-            data->elements = (Numeric*)repalloc(data->elements, sizeof(Numeric)*(data->nelements + SLICE_SIZE));
-            data->nelements = data->nelements + SLICE_SIZE;
+        if (data->nelements > data->maxelements-1) {
+            data->elements = (Numeric*)repalloc(data->elements, sizeof(Numeric)*(data->maxelements + SLICE_SIZE));
+            data->maxelements = data->maxelements + SLICE_SIZE;
         }
 
-        data->elements[data->next++] = DatumGetNumeric(datumCopy(NumericGetDatum(element), false, -1));
+        data->elements[data->nelements++] = DatumGetNumeric(datumCopy(NumericGetDatum(element), false, -1));
 
     }
 
@@ -507,7 +507,7 @@ trimmed_serial_double(PG_FUNCTION_ARGS)
 {
 	struct_double  *data = (struct_double *)PG_GETARG_POINTER(0);
 	Size			hlen = offsetof(struct_double, elements);	/* header */
-	Size			len = data->next * sizeof(double);			/* elements */
+	Size			len = data->nelements * sizeof(double);			/* elements */
 	bytea		   *out = (bytea *)palloc(VARHDRSZ + len) + hlen;
 	char		   *ptr;
 
@@ -530,7 +530,7 @@ trimmed_serial_int32(PG_FUNCTION_ARGS)
 {
 	struct_int32   *data = (struct_int32 *)PG_GETARG_POINTER(0);
 	Size			hlen = offsetof(struct_int32, elements);	/* header */
-	Size			len = data->next * sizeof(int32);			/* elements */
+	Size			len = data->nelements * sizeof(int32);			/* elements */
 	bytea		   *out = (bytea *)palloc(VARHDRSZ + len + hlen);
 	char		   *ptr;
 
@@ -553,7 +553,7 @@ trimmed_serial_int64(PG_FUNCTION_ARGS)
 {
 	struct_int64  *data = (struct_int64 *)PG_GETARG_POINTER(0);
 	Size			hlen = offsetof(struct_int64, elements);	/* header */
-	Size			len = data->next * sizeof(int64);			/* elements */
+	Size			len = data->nelements * sizeof(int64);			/* elements */
 	bytea		   *out = (bytea *)palloc(VARHDRSZ + len + hlen);
 	char		   *ptr;
 
@@ -585,7 +585,7 @@ trimmed_serial_numeric(PG_FUNCTION_ARGS)
 
 	/* sum sizes of all Numeric values to get the required size */
 	len = 0;
-	for (i = 0; i < data->next; i++)
+	for (i = 0; i < data->nelements; i++)
 		len += VARSIZE(data->elements[i]);
 
 	out = (bytea *)palloc0(VARHDRSZ + len + hlen);
@@ -597,7 +597,7 @@ trimmed_serial_numeric(PG_FUNCTION_ARGS)
 	ptr += offsetof(struct_numeric, elements);
 
 	/* now copy the contents of each Numeric value into the buffer */
-	for (i = 0; i < data->next; i++)
+	for (i = 0; i < data->nelements; i++)
 	{
 		memcpy(ptr, data->elements[i], VARSIZE(data->elements[i]));
 		ptr += VARSIZE(data->elements[i]);
@@ -626,13 +626,13 @@ trimmed_deserial_double(PG_FUNCTION_ARGS)
 	memcpy(out, ptr, offsetof(struct_double, elements));
 	ptr += offsetof(struct_double, elements);
 
-	Assert(len == offsetof(struct_double, elements) + out->next * sizeof(double));
+	Assert(len == offsetof(struct_double, elements) + out->nelements * sizeof(double));
 
 	/* we only allocate the necessary space */
-	out->elements = (double *)palloc(out->next * sizeof(double));
-	out->nelements = out->next;
+	out->elements = (double *)palloc(out->nelements * sizeof(double));
+	out->maxelements = out->nelements;
 
-	memcpy((void *)out->elements, ptr, out->next * sizeof(double));
+	memcpy((void *)out->elements, ptr, out->nelements * sizeof(double));
 
 	PG_RETURN_POINTER(out);
 }
@@ -654,13 +654,13 @@ trimmed_deserial_int32(PG_FUNCTION_ARGS)
 	memcpy(out, ptr, offsetof(struct_int32, elements));
 	ptr += offsetof(struct_int32, elements);
 
-	Assert(len == offsetof(struct_int32, elements) + out->next * sizeof(int32));
+	Assert(len == offsetof(struct_int32, elements) + out->nelements * sizeof(int32));
 
 	/* we only allocate the necessary space */
-	out->elements = (int32 *)palloc(out->next * sizeof(int32));
-	out->nelements = out->next;
+	out->elements = (int32 *)palloc(out->nelements * sizeof(int32));
+	out->maxelements = out->nelements;
 
-	memcpy((void *)out->elements, ptr, out->next * sizeof(int32));
+	memcpy((void *)out->elements, ptr, out->nelements * sizeof(int32));
 
 	PG_RETURN_POINTER(out);
 }
@@ -682,13 +682,13 @@ trimmed_deserial_int64(PG_FUNCTION_ARGS)
 	memcpy(out, ptr, offsetof(struct_int64, elements));
 	ptr += offsetof(struct_int64, elements);
 
-	Assert(len == offsetof(struct_int64, elements) + out->next * sizeof(int64));
+	Assert(len == offsetof(struct_int64, elements) + out->nelements * sizeof(int64));
 
 	/* we only allocate the necessary space */
-	out->elements = (int64 *)palloc(out->next * sizeof(int64));
-	out->nelements = out->next;
+	out->elements = (int64 *)palloc(out->nelements * sizeof(int64));
+	out->maxelements = out->nelements;
 
-	memcpy((void *)out->elements, ptr, out->next * sizeof(int64));
+	memcpy((void *)out->elements, ptr, out->nelements * sizeof(int64));
 
 	PG_RETURN_POINTER(out);
 }
@@ -712,8 +712,8 @@ trimmed_deserial_numeric(PG_FUNCTION_ARGS)
 	ptr += offsetof(struct_numeric, elements);
 
 	/* allocate an array with enough space for the Numeric pointers */
-	out->nelements = out->next; /* no slack space for new data */
-	out->elements = (Numeric *)palloc(out->next * sizeof(Numeric));
+	out->maxelements = out->nelements; /* no slack space for new data */
+	out->elements = (Numeric *)palloc(out->nelements * sizeof(Numeric));
 
 	/*
 	 * we also need to copy the Numeric contents, but instead of copying
@@ -724,7 +724,7 @@ trimmed_deserial_numeric(PG_FUNCTION_ARGS)
 	ptr = tmp;
 
 	/* and now just set the pointers in the elements array */
-	for (i = 0; i < out->next; i++)
+	for (i = 0; i < out->nelements; i++)
 	{
 		out->elements[i] = (Numeric)ptr;
 		ptr += VARSIZE(ptr);
@@ -756,15 +756,15 @@ trimmed_combine_double(PG_FUNCTION_ARGS)
 		old_context = MemoryContextSwitchTo(agg_context);
 
 		data1 = (struct_double *)palloc0(sizeof(struct_double));
+		data1->maxelements = data2->maxelements;
 		data1->nelements = data2->nelements;
-		data1->next = data2->next;
 
 		data1->cut_lower = data2->cut_lower;
 		data1->cut_upper = data2->cut_upper;
 
-		data1->elements = (double*)palloc0(sizeof(double) * data2->nelements);
+		data1->elements = (double*)palloc0(sizeof(double) * data2->maxelements);
 
-		memcpy(data1->elements, data2->elements, sizeof(double) * data2->nelements);
+		memcpy(data1->elements, data2->elements, sizeof(double) * data2->maxelements);
 
 		MemoryContextSwitchTo(old_context);
 
@@ -774,20 +774,20 @@ trimmed_combine_double(PG_FUNCTION_ARGS)
 	Assert((data1 != NULL) && (data2 != NULL));
 
 	/* if there's not enough space in data1, enlarge it */
-	if (data1->next + data2->next >= data1->nelements)
+	if (data1->nelements + data2->nelements >= data1->maxelements)
 	{
 		/* we size the array to match the size exactly */
-		data1->nelements = data1->next + data2->next;
+		data1->maxelements = data1->nelements + data2->nelements;
 		data1->elements = (double *)repalloc(data1->elements,
-											 data1->nelements * sizeof(double));
+											 data1->maxelements * sizeof(double));
 	}
 
 	/* copy the elements from data2 into data1 */
-	memcpy(data1->elements + data1->next, data2->elements,
-		   data2->next * sizeof(double));
+	memcpy(data1->elements + data1->nelements, data2->elements,
+		   data2->nelements * sizeof(double));
 
 	/* and finally remember the current number of elements */
-	data1->next += data2->next;
+	data1->nelements += data2->nelements;
 
 	PG_RETURN_POINTER(data1);
 }
@@ -813,15 +813,15 @@ trimmed_combine_int32(PG_FUNCTION_ARGS)
 		old_context = MemoryContextSwitchTo(agg_context);
 
 		data1 = (struct_int32 *)palloc0(sizeof(struct_int32));
+		data1->maxelements = data2->maxelements;
 		data1->nelements = data2->nelements;
-		data1->next = data2->next;
 
 		data1->cut_lower = data2->cut_lower;
 		data1->cut_upper = data2->cut_upper;
 
-		data1->elements = (int32*)palloc0(sizeof(int32) * data2->nelements);
+		data1->elements = (int32*)palloc0(sizeof(int32) * data2->maxelements);
 
-		memcpy(data1->elements, data2->elements, sizeof(int32) * data2->nelements);
+		memcpy(data1->elements, data2->elements, sizeof(int32) * data2->maxelements);
 
 		MemoryContextSwitchTo(old_context);
 
@@ -831,20 +831,20 @@ trimmed_combine_int32(PG_FUNCTION_ARGS)
 	Assert((data1 != NULL) && (data2 != NULL));
 
 	/* if there's not enough space in data1, enlarge it */
-	if (data1->next + data2->next >= data1->nelements)
+	if (data1->nelements + data2->nelements >= data1->maxelements)
 	{
 		/* we size the array to match the size exactly */
-		data1->nelements = data1->next + data2->next;
+		data1->maxelements = data1->nelements + data2->nelements;
 		data1->elements = (int32 *)repalloc(data1->elements,
-											 data1->nelements * sizeof(int32));
+											 data1->maxelements * sizeof(int32));
 	}
 
 	/* copy the elements from data2 into data1 */
-	memcpy(data1->elements + data1->next, data2->elements,
-		   data2->next * sizeof(int32));
+	memcpy(data1->elements + data1->nelements, data2->elements,
+		   data2->nelements * sizeof(int32));
 
 	/* and finally remember the current number of elements */
-	data1->next += data2->next;
+	data1->nelements += data2->nelements;
 
 	PG_RETURN_POINTER(data1);
 }
@@ -870,15 +870,15 @@ trimmed_combine_int64(PG_FUNCTION_ARGS)
 		old_context = MemoryContextSwitchTo(agg_context);
 
 		data1 = (struct_int64 *)palloc0(sizeof(struct_int64));
+		data1->maxelements = data2->maxelements;
 		data1->nelements = data2->nelements;
-		data1->next = data2->next;
 
 		data1->cut_lower = data2->cut_lower;
 		data1->cut_upper = data2->cut_upper;
 
-		data1->elements = (int64*)palloc0(sizeof(int64) * data2->nelements);
+		data1->elements = (int64*)palloc0(sizeof(int64) * data2->maxelements);
 
-		memcpy(data1->elements, data2->elements, sizeof(int64) * data2->nelements);
+		memcpy(data1->elements, data2->elements, sizeof(int64) * data2->maxelements);
 
 		MemoryContextSwitchTo(old_context);
 
@@ -886,20 +886,20 @@ trimmed_combine_int64(PG_FUNCTION_ARGS)
 	}
 
 	/* if there's not enough space in data1, enlarge it */
-	if (data1->next + data2->next >= data1->nelements)
+	if (data1->nelements + data2->nelements >= data1->maxelements)
 	{
 		/* we size the array to match the size exactly */
-		data1->nelements = data1->next + data2->next;
+		data1->maxelements = data1->nelements + data2->nelements;
 		data1->elements = (int64 *)repalloc(data1->elements,
-											 data1->nelements * sizeof(int64));
+											 data1->maxelements * sizeof(int64));
 	}
 
 	/* copy the elements from data2 into data1 */
-	memcpy(data1->elements + data1->next, data2->elements,
-		   data2->next * sizeof(int64));
+	memcpy(data1->elements + data1->nelements, data2->elements,
+		   data2->nelements * sizeof(int64));
 
 	/* and finally remember the current number of elements */
-	data1->next += data2->next;
+	data1->nelements += data2->nelements;
 
 	PG_RETURN_POINTER(data1);
 }
@@ -928,24 +928,24 @@ trimmed_combine_numeric(PG_FUNCTION_ARGS)
 		old_context = MemoryContextSwitchTo(agg_context);
 
 		data1 = (struct_numeric *)palloc0(sizeof(struct_numeric));
-		data1->nelements = data2->nelements;
-		data1->next = 0;
+		data1->maxelements = data2->maxelements;
+		data1->nelements = 0;
 
 		data1->cut_lower = data2->cut_lower;
 		data1->cut_upper = data2->cut_upper;
 
-		data1->elements = (Numeric*)palloc0(sizeof(Numeric) * data2->nelements);
+		data1->elements = (Numeric*)palloc0(sizeof(Numeric) * data2->maxelements);
 
 		len = 0;
-		for (i = 0; i < data2->next; i++)
+		for (i = 0; i < data2->nelements; i++)
 			len += VARSIZE(data2->elements[i]);
 
 		tmp = palloc(len);
 
-		for (i = 0; i < data2->next; i++)
+		for (i = 0; i < data2->nelements; i++)
 		{
 			memcpy(tmp, data2->elements[i], VARSIZE(data2->elements[i]));
-			data1->elements[data1->next++] = (Numeric)tmp;
+			data1->elements[data1->nelements++] = (Numeric)tmp;
 			tmp += VARSIZE(data2->elements[i]);
 		}
 
@@ -955,12 +955,12 @@ trimmed_combine_numeric(PG_FUNCTION_ARGS)
 	}
 
 	/* if there's not enough space in data1, enlarge it */
-	if (data1->next + data2->next >= data1->nelements)
+	if (data1->nelements + data2->nelements >= data1->maxelements)
 	{
 		/* we size the array to match the size exactly */
-		data1->nelements = data1->next + data2->next;
+		data1->maxelements = data1->nelements + data2->nelements;
 		data1->elements = (Numeric *)repalloc(data1->elements,
-											  data1->nelements * sizeof(Numeric));
+											  data1->maxelements * sizeof(Numeric));
 	}
 
 	/*
@@ -969,21 +969,21 @@ trimmed_combine_numeric(PG_FUNCTION_ARGS)
 	 * and use the pointers
 	 */
 	len = 0;
-	for (i = 0; i < data2->next; i++)
+	for (i = 0; i < data2->nelements; i++)
 		len += VARSIZE(data2->elements[i]);
 
 	old_context = MemoryContextSwitchTo(agg_context);
 	tmp = palloc(len);
 	MemoryContextSwitchTo(old_context);
 
-	for (i = 0; i < data2->next; i++)
+	for (i = 0; i < data2->nelements; i++)
 	{
 		memcpy(tmp, data2->elements[i], VARSIZE(data2->elements[i]));
-		data1->elements[data1->next++] = (Numeric)tmp;
+		data1->elements[data1->nelements++] = (Numeric)tmp;
 		tmp += VARSIZE(data2->elements[i]);
 	}
 
-	Assert(data1->next == data1->nelements);
+	Assert(data1->nelements == data1->maxelements);
 
 	PG_RETURN_POINTER(data1);
 }
@@ -1006,15 +1006,15 @@ trimmed_avg_double(PG_FUNCTION_ARGS)
 
     data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(double), &double_comparator);
+    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
     for (i = from; i < to; i++) {
         result = result + data->elements[i]/cnt;
@@ -1046,15 +1046,15 @@ trimmed_double_array(PG_FUNCTION_ARGS)
 
     data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(double), &double_comparator);
+    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
     /* average */
     result[0] = 0;
@@ -1101,15 +1101,15 @@ trimmed_avg_int32(PG_FUNCTION_ARGS)
 
     data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int32), &int32_comparator);
+    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
     for (i = from; i < to; i++) {
         result = result + ((double)data->elements[i])/cnt;
@@ -1140,15 +1140,15 @@ trimmed_int32_array(PG_FUNCTION_ARGS)
 
     data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int32), &int32_comparator);
+    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
     /* average */
     result[0] = 0;
@@ -1195,15 +1195,15 @@ trimmed_avg_int64(PG_FUNCTION_ARGS)
 
     data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int64), &int64_comparator);
+    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
     for (i = from; i < to; i++) {
         result = result + ((double)data->elements[i])/cnt;
@@ -1234,15 +1234,15 @@ trimmed_int64_array(PG_FUNCTION_ARGS)
 
     data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int64), &int64_comparator);
+    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
     /* average */
     result[0] = 0;
@@ -1289,8 +1289,8 @@ trimmed_avg_numeric(PG_FUNCTION_ARGS)
 
     data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
 
     if (from > to) {
         PG_RETURN_NULL();
@@ -1300,7 +1300,7 @@ trimmed_avg_numeric(PG_FUNCTION_ARGS)
     cnt    = create_numeric(to-from);
     result = create_numeric(0);
 
-    qsort(data->elements, data->next, sizeof(Numeric), &numeric_comparator);
+    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
     for (i = from; i < to; i++) {
         result = add_numeric(result, div_numeric(data->elements[i], cnt));
@@ -1332,8 +1332,8 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 
     data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
 
     if (from > to) {
         PG_RETURN_NULL();
@@ -1343,7 +1343,7 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
     cntNumeric = create_numeric(to-from);
     cntNumeric_1 = create_numeric(to-from-1);
 
-    qsort(data->elements, data->next, sizeof(Numeric), &numeric_comparator);
+    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
     /* average */
     result[0] = create_numeric(0);
@@ -1397,15 +1397,15 @@ trimmed_var_double(PG_FUNCTION_ARGS)
 
     data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(double), &double_comparator);
+    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
     for (i = from; i < to; i++) {
         avg = avg + data->elements[i]/cnt;
@@ -1438,15 +1438,15 @@ trimmed_var_int32(PG_FUNCTION_ARGS)
 
     data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int32), &int32_comparator);
+    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
     for (i = from; i < to; i++) {
         avg = avg + ((double)data->elements[i])/cnt;
@@ -1479,15 +1479,15 @@ trimmed_var_int64(PG_FUNCTION_ARGS)
 
     data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int64), &int64_comparator);
+    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
     for (i = from; i < to; i++) {
         avg = avg + ((double)data->elements[i])/cnt;
@@ -1519,8 +1519,8 @@ trimmed_var_numeric(PG_FUNCTION_ARGS)
 
     data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
 
     if (from > to) {
         PG_RETURN_NULL();
@@ -1530,7 +1530,7 @@ trimmed_var_numeric(PG_FUNCTION_ARGS)
     avg = create_numeric(0);
     result = create_numeric(0);
 
-    qsort(data->elements, data->next, sizeof(Numeric), &numeric_comparator);
+    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
     for (i = from; i < to; i++) {
         avg = add_numeric(avg, div_numeric(data->elements[i], cnt));
@@ -1562,15 +1562,15 @@ trimmed_var_pop_double(PG_FUNCTION_ARGS)
 
     data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(double), &double_comparator);
+    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = sum_x + data->elements[i];
@@ -1599,15 +1599,15 @@ trimmed_var_pop_int32(PG_FUNCTION_ARGS)
 
     data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int32), &int32_comparator);
+    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = sum_x + data->elements[i];
@@ -1636,15 +1636,15 @@ trimmed_var_pop_int64(PG_FUNCTION_ARGS)
 
     data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int64), &int64_comparator);
+    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = sum_x + data->elements[i];
@@ -1673,8 +1673,8 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 
     data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
 
     if (from > to) {
         PG_RETURN_NULL();
@@ -1684,7 +1684,7 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
     sum_x = create_numeric(0);
     sum_x2 = create_numeric(0);
 
-    qsort(data->elements, data->next, sizeof(Numeric), &numeric_comparator);
+    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = add_numeric(sum_x, data->elements[i]);
@@ -1714,15 +1714,15 @@ trimmed_var_samp_double(PG_FUNCTION_ARGS)
 
     data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(double), &double_comparator);
+    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = sum_x + data->elements[i];
@@ -1751,15 +1751,15 @@ trimmed_var_samp_int32(PG_FUNCTION_ARGS)
 
     data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int32), &int32_comparator);
+    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = sum_x + data->elements[i];
@@ -1788,15 +1788,15 @@ trimmed_var_samp_int64(PG_FUNCTION_ARGS)
 
     data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int64), &int64_comparator);
+    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = sum_x + data->elements[i];
@@ -1825,8 +1825,8 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 
     data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
 
     if (from > to) {
         PG_RETURN_NULL();
@@ -1836,7 +1836,7 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
     sum_x = create_numeric(0);
     sum_x2 = create_numeric(0);
 
-    qsort(data->elements, data->next, sizeof(Numeric), &numeric_comparator);
+    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = add_numeric(sum_x, data->elements[i]);
@@ -1867,15 +1867,15 @@ trimmed_stddev_double(PG_FUNCTION_ARGS)
 
     data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(double), &double_comparator);
+    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
     for (i = from; i < to; i++) {
         avg = avg + data->elements[i]/cnt;
@@ -1908,15 +1908,15 @@ trimmed_stddev_int32(PG_FUNCTION_ARGS)
 
     data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int32), &int32_comparator);
+    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
     for (i = from; i < to; i++) {
         avg = avg + ((double)data->elements[i])/cnt;
@@ -1949,15 +1949,15 @@ trimmed_stddev_int64(PG_FUNCTION_ARGS)
 
     data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int64), &int64_comparator);
+    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
     for (i = from; i < to; i++) {
         avg = avg + ((double)data->elements[i])/cnt;
@@ -1989,8 +1989,8 @@ trimmed_stddev_numeric(PG_FUNCTION_ARGS)
 
     data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
 
     if (from > to) {
         PG_RETURN_NULL();
@@ -2000,7 +2000,7 @@ trimmed_stddev_numeric(PG_FUNCTION_ARGS)
     avg = create_numeric(0);
     result = create_numeric(0);
 
-    qsort(data->elements, data->next, sizeof(Numeric), &numeric_comparator);
+    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
     for (i = from; i < to; i++) {
         avg = add_numeric(avg, div_numeric(data->elements[i], cnt));
@@ -2032,15 +2032,15 @@ trimmed_stddev_pop_double(PG_FUNCTION_ARGS)
 
     data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(double), &double_comparator);
+    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = sum_x + data->elements[i];
@@ -2069,15 +2069,15 @@ trimmed_stddev_pop_int32(PG_FUNCTION_ARGS)
 
     data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int32), &int32_comparator);
+    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = sum_x + data->elements[i];
@@ -2106,15 +2106,15 @@ trimmed_stddev_pop_int64(PG_FUNCTION_ARGS)
 
     data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int64), &int64_comparator);
+    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = sum_x + data->elements[i];
@@ -2143,8 +2143,8 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 
     data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
 
     if (from > to) {
         PG_RETURN_NULL();
@@ -2154,7 +2154,7 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
     sum_x = create_numeric(0);
     sum_x2 = create_numeric(0);
 
-    qsort(data->elements, data->next, sizeof(Numeric), &numeric_comparator);
+    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = add_numeric(sum_x, data->elements[i]);
@@ -2185,15 +2185,15 @@ trimmed_stddev_samp_double(PG_FUNCTION_ARGS)
 
     data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(double), &double_comparator);
+    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = sum_x + data->elements[i];
@@ -2222,15 +2222,15 @@ trimmed_stddev_samp_int32(PG_FUNCTION_ARGS)
 
     data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int32), &int32_comparator);
+    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = sum_x + data->elements[i];
@@ -2259,15 +2259,15 @@ trimmed_stddev_samp_int64(PG_FUNCTION_ARGS)
 
     data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
     cnt  = (to - from);
 
     if (from > to) {
         PG_RETURN_NULL();
     }
 
-    qsort(data->elements, data->next, sizeof(int64), &int64_comparator);
+    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = sum_x + data->elements[i];
@@ -2296,8 +2296,8 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 
     data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->next * data->cut_lower);
-    to   = data->next - floor(data->next * data->cut_upper);
+    from = floor(data->nelements * data->cut_lower);
+    to   = data->nelements - floor(data->nelements * data->cut_upper);
 
     if (from > to) {
         PG_RETURN_NULL();
@@ -2307,7 +2307,7 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
     sum_x = create_numeric(0);
     sum_x2 = create_numeric(0);
 
-    qsort(data->elements, data->next, sizeof(Numeric), &numeric_comparator);
+    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
     for (i = from; i < to; i++) {
         sum_x = add_numeric(sum_x, data->elements[i]);
