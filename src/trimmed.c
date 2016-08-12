@@ -474,7 +474,8 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 												sizeof(Numeric) * data->maxelements);
 		}
 
-		data->elements[data->nelements++] = DatumGetNumeric(datumCopy(NumericGetDatum(element), false, -1));
+		data->elements[data->nelements++]
+			= DatumGetNumeric(datumCopy(NumericGetDatum(element), false, -1));
 	}
 
 	PG_RETURN_POINTER(data);
@@ -1290,20 +1291,42 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 	sum_x   = create_numeric(0);
 	sum_x2  = create_numeric(0);
 
+	/* compute sumX and sumX2 */
 	for (i = from; i < to; i++)
 	{
-		result[0]   = add_numeric(result[0], div_numeric(data->elements[i], cntNumeric));
-		sum_x	   = add_numeric(sum_x, data->elements[i]);
-		sum_x2	  = add_numeric(sum_x2, mul_numeric(data->elements[i], data->elements[i]));
+		sum_x  = add_numeric(sum_x, data->elements[i]);
+		sum_x2 = add_numeric(sum_x2,
+							 mul_numeric(data->elements[i],
+										 data->elements[i]));
 	}
 
-	result[1] = div_numeric(sub_numeric(mul_numeric(cntNumeric, sum_x2), mul_numeric(sum_x, sum_x)), mul_numeric(cntNumeric, cntNumeric)); /* var_pop */
-	result[2] = div_numeric(sub_numeric(mul_numeric(cntNumeric, sum_x2), mul_numeric(sum_x, sum_x)), mul_numeric(cntNumeric, cntNumeric_1)); /* var_samp */
+	/* compute the average */
+	result[0] = div_numeric(sum_x, cntNumeric);
+
+	/* var_pop */
+	result[1] = div_numeric(
+					sub_numeric(
+						mul_numeric(cntNumeric, sum_x2),
+						mul_numeric(sum_x, sum_x)
+					),
+					mul_numeric(cntNumeric, cntNumeric));
+
+	/* var_samp */
+	result[2] = div_numeric(
+					sub_numeric(
+						mul_numeric(cntNumeric, sum_x2),
+						mul_numeric(sum_x, sum_x)
+					),
+					mul_numeric(cntNumeric, cntNumeric_1));
 
 	/* variance */
 	result[3] = create_numeric(0);
 	for (i = from; i < to; i++)
-		result[3]   = add_numeric(result[3], div_numeric(mul_numeric(sub_numeric(data->elements[i],result[0]), sub_numeric(data->elements[i],result[0])), cntNumeric));
+	{
+		Numeric	 delta = sub_numeric(data->elements[i], result[0]);
+		result[3]   = add_numeric(result[3], mul_numeric(delta, delta));
+	}
+	result[3] = div_numeric(result[3], cntNumeric);
 
 	result[4] = sqrt_numeric(result[1]); /* stddev_pop */
 	result[5] = sqrt_numeric(result[2]); /* stddev_samp */
@@ -1443,7 +1466,11 @@ trimmed_var_numeric(PG_FUNCTION_ARGS)
 		avg = add_numeric(avg, div_numeric(data->elements[i], cnt));
 
 	for (i = from; i < to; i++)
-		result = add_numeric(result, div_numeric(pow_numeric(sub_numeric(data->elements[i],avg),2),cnt));
+		result = add_numeric(
+					result,
+					div_numeric(
+						pow_numeric(sub_numeric(data->elements[i],avg),2),
+						cnt));
 
 	PG_RETURN_NUMERIC(result);
 }
@@ -1577,11 +1604,16 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 	for (i = from; i < to; i++)
 	{
 		sum_x = add_numeric(sum_x, data->elements[i]);
-		sum_x2 = add_numeric(sum_x2, mul_numeric(data->elements[i], data->elements[i]));
+		sum_x2 = add_numeric(
+					sum_x2,
+					mul_numeric(data->elements[i], data->elements[i]));
 	}
 
-	PG_RETURN_NUMERIC (div_numeric(sub_numeric(mul_numeric(cnt, sum_x2), mul_numeric(sum_x, sum_x)),
-								   mul_numeric(cnt, cnt)));
+	PG_RETURN_NUMERIC (div_numeric(
+							sub_numeric(
+								mul_numeric(cnt, sum_x2),
+								mul_numeric(sum_x, sum_x)),
+							mul_numeric(cnt, cnt)));
 }
 
 Datum
@@ -1713,11 +1745,19 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 	for (i = from; i < to; i++)
 	{
 		sum_x = add_numeric(sum_x, data->elements[i]);
-		sum_x2 = add_numeric(sum_x2, mul_numeric(data->elements[i], data->elements[i]));
+		sum_x2 = add_numeric(
+						sum_x2,
+						mul_numeric(data->elements[i], data->elements[i]));
 	}
 
-	PG_RETURN_NUMERIC (div_numeric(sub_numeric(mul_numeric(cnt, sum_x2), mul_numeric(sum_x, sum_x)),
-								   mul_numeric(cnt, sub_numeric(cnt, create_numeric(1)))));
+	PG_RETURN_NUMERIC (div_numeric(
+							sub_numeric(
+								mul_numeric(cnt, sum_x2),
+								mul_numeric(sum_x, sum_x)
+							),
+							mul_numeric(
+								cnt,
+								sub_numeric(cnt, create_numeric(1)))));
 }
 
 Datum
@@ -1850,7 +1890,11 @@ trimmed_stddev_numeric(PG_FUNCTION_ARGS)
 		avg = add_numeric(avg, div_numeric(data->elements[i], cnt));
 
 	for (i = from; i < to; i++)
-		result = add_numeric(result, div_numeric(pow_numeric(sub_numeric(data->elements[i], avg), 2), cnt));
+		result = add_numeric(
+					result,
+					div_numeric(
+						pow_numeric(sub_numeric(data->elements[i], avg), 2),
+						cnt));
 
 	PG_RETURN_NUMERIC (sqrt_numeric(result));
 }
@@ -1984,12 +2028,17 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 	for (i = from; i < to; i++)
 	{
 		sum_x = add_numeric(sum_x, data->elements[i]);
-		sum_x2 = add_numeric(sum_x2, mul_numeric(data->elements[i], data->elements[i]));
+		sum_x2 = add_numeric(sum_x2,
+							 mul_numeric(data->elements[i],
+										 data->elements[i]));
 	}
 
-	PG_RETURN_NUMERIC (sqrt_numeric(div_numeric(sub_numeric(mul_numeric(cnt, sum_x2),
-															mul_numeric(sum_x, sum_x)),
-												pow_numeric(cnt, 2))));
+	PG_RETURN_NUMERIC (sqrt_numeric(
+							div_numeric(
+								sub_numeric(
+									mul_numeric(cnt, sum_x2),
+									mul_numeric(sum_x, sum_x)),
+								pow_numeric(cnt, 2))));
 }
 
 Datum
@@ -2124,9 +2173,14 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 		sum_x2 = add_numeric(sum_x2, pow_numeric(data->elements[i], 2));
 	}
 
-	PG_RETURN_NUMERIC (sqrt_numeric(div_numeric(sub_numeric(mul_numeric(cnt, sum_x2),
-															pow_numeric(sum_x, 2)),
-												mul_numeric(cnt, sub_numeric(cnt, create_numeric(1))))));
+	PG_RETURN_NUMERIC (sqrt_numeric(
+							div_numeric(
+								sub_numeric(
+									mul_numeric(cnt, sum_x2),
+									pow_numeric(sum_x, 2)),
+								mul_numeric(
+									cnt,
+									sub_numeric(cnt, create_numeric(1))))));
 }
 
 static int
