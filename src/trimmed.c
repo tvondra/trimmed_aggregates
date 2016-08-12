@@ -78,7 +78,8 @@ PG_MODULE_MAGIC;
 
 #endif
 
-#define SLICE_SIZE 1024
+/* how many elements to start with */
+#define MIN_ELEMENTS	32
 
 /* FIXME The final functions copy a lot of code - refactor to share. */
 
@@ -307,8 +308,6 @@ Datum
 trimmed_append_double(PG_FUNCTION_ARGS)
 {
 	state_double * data;
-	double element;
-
 	MemoryContext aggcontext;
 
 	GET_AGG_CONTEXT("trimmed_append_double", fcinfo, aggcontext);
@@ -318,11 +317,11 @@ trimmed_append_double(PG_FUNCTION_ARGS)
 		MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
 
 		data = (state_double*)palloc(sizeof(state_double));
-		data->elements  = (double*)palloc(SLICE_SIZE*sizeof(double));
+		data->elements = (double*)palloc(MIN_ELEMENTS * sizeof(double));
 
 		MemoryContextSwitchTo(oldcontext);
 
-		data->maxelements = SLICE_SIZE;
+		data->maxelements = MIN_ELEMENTS;
 		data->nelements = 0;
 
 		/* how much to cut */
@@ -334,11 +333,13 @@ trimmed_append_double(PG_FUNCTION_ARGS)
 
 	if (! PG_ARGISNULL(1))
 	{
-		element = PG_GETARG_FLOAT8(1);
+		double element = PG_GETARG_FLOAT8(1);
 
-		if (data->nelements > data->maxelements-1) {
-			data->elements = (double*)repalloc(data->elements, sizeof(double)*(data->maxelements + SLICE_SIZE));
-			data->maxelements = data->maxelements + SLICE_SIZE;
+		if (data->nelements >= data->maxelements)
+		{
+			data->maxelements *= 2;
+			data->elements = (double*)repalloc(data->elements,
+											   sizeof(double) * data->maxelements);
 		}
 
 		data->elements[data->nelements++] = element;
@@ -351,8 +352,6 @@ Datum
 trimmed_append_int32(PG_FUNCTION_ARGS)
 {
 	state_int32 * data;
-	int32 element;
-
 	MemoryContext aggcontext;
 
 	GET_AGG_CONTEXT("trimmed_append_int32", fcinfo, aggcontext);
@@ -362,11 +361,11 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
 		MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
 
 		data = (state_int32*)palloc(sizeof(state_int32));
-		data->elements  = (int32*)palloc(SLICE_SIZE*sizeof(int32));
+		data->elements = (int32*)palloc(MIN_ELEMENTS * sizeof(int32));
 
 		MemoryContextSwitchTo(oldcontext);
 
-		data->maxelements = SLICE_SIZE;
+		data->maxelements = MIN_ELEMENTS;
 		data->nelements = 0;
 
 		/* how much to cut */
@@ -378,11 +377,13 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
 
 	if (! PG_ARGISNULL(1))
 	{
-		element = PG_GETARG_INT32(1);
+		int32 element = PG_GETARG_INT32(1);
 
-		if (data->nelements > data->maxelements-1) {
-			data->elements = (int32*)repalloc(data->elements, sizeof(int32)*(data->maxelements + SLICE_SIZE));
-			data->maxelements = data->maxelements + SLICE_SIZE;
+		if (data->nelements >= data->maxelements)
+		{
+			data->maxelements *= 2;
+			data->elements = (int32*)repalloc(data->elements,
+											  sizeof(int32) * data->maxelements);
 		}
 
 		data->elements[data->nelements++] = element;
@@ -395,8 +396,6 @@ Datum
 trimmed_append_int64(PG_FUNCTION_ARGS)
 {
 	state_int64 * data;
-	int64 element;
-
 	MemoryContext aggcontext;
 
 	GET_AGG_CONTEXT("trimmed_append_int64", fcinfo, aggcontext);
@@ -406,11 +405,11 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
 		MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
 
 		data = (state_int64*)palloc(sizeof(state_int64));
-		data->elements  = (int64*)palloc(SLICE_SIZE*sizeof(int64));
+		data->elements = (int64*)palloc(MIN_ELEMENTS * sizeof(int64));
 
 		MemoryContextSwitchTo(oldcontext);
 
-		data->maxelements = SLICE_SIZE;
+		data->maxelements = MIN_ELEMENTS;
 		data->nelements = 0;
 
 		/* how much to cut */
@@ -422,11 +421,13 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
 
 	if (! PG_ARGISNULL(1))
 	{
-		element = PG_GETARG_INT64(1);
+		int64 element = PG_GETARG_INT64(1);
 
-		if (data->nelements > data->maxelements-1) {
-			data->elements = (int64*)repalloc(data->elements, sizeof(int64)*(data->maxelements + SLICE_SIZE));
-			data->maxelements = data->maxelements + SLICE_SIZE;
+		if (data->nelements >= data->maxelements)
+		{
+			data->maxelements *= 2;
+			data->elements = (int64*)repalloc(data->elements,
+											  sizeof(int64) * data->maxelements);
 		}
 
 		data->elements[data->nelements++] = element;
@@ -439,8 +440,6 @@ Datum
 trimmed_append_numeric(PG_FUNCTION_ARGS)
 {
 	state_numeric * data;
-	Numeric element;
-
 	MemoryContext aggcontext;
 
 	GET_AGG_CONTEXT("trimmed_append_numeric", fcinfo, aggcontext);
@@ -450,11 +449,11 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 		MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
 
 		data = (state_numeric*)palloc(sizeof(state_numeric));
-		data->elements  = (Numeric*)palloc(SLICE_SIZE*sizeof(Numeric));
+		data->elements = (Numeric*)palloc(MIN_ELEMENTS * sizeof(Numeric));
 
 		MemoryContextSwitchTo(oldcontext);
 
-		data->maxelements = SLICE_SIZE;
+		data->maxelements = MIN_ELEMENTS;
 		data->nelements = 0;
 
 		/* how much to cut */
@@ -466,11 +465,13 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 
 	if (! PG_ARGISNULL(1))
 	{
-		element = PG_GETARG_NUMERIC(1);
+		Numeric element = PG_GETARG_NUMERIC(1);
 
-		if (data->nelements > data->maxelements-1) {
-			data->elements = (Numeric*)repalloc(data->elements, sizeof(Numeric)*(data->maxelements + SLICE_SIZE));
-			data->maxelements = data->maxelements + SLICE_SIZE;
+		if (data->nelements >= data->maxelements)
+		{
+			data->maxelements *= 2;
+			data->elements = (Numeric*)repalloc(data->elements,
+												sizeof(Numeric) * data->maxelements);
 		}
 
 		data->elements[data->nelements++] = DatumGetNumeric(datumCopy(NumericGetDatum(element), false, -1));
