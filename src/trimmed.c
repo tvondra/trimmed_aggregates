@@ -1016,7 +1016,7 @@ trimmed_avg_double(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
@@ -1049,7 +1049,7 @@ trimmed_double_array(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
@@ -1100,7 +1100,7 @@ trimmed_avg_int32(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
@@ -1133,7 +1133,7 @@ trimmed_int32_array(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
@@ -1184,7 +1184,7 @@ trimmed_avg_int64(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
@@ -1217,7 +1217,7 @@ trimmed_int64_array(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
@@ -1267,7 +1267,7 @@ trimmed_avg_numeric(PG_FUNCTION_ARGS)
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	/* create numeric values */
@@ -1304,7 +1304,7 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	/* create numeric values */
@@ -1384,7 +1384,7 @@ trimmed_var_double(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
@@ -1418,7 +1418,7 @@ trimmed_var_int32(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
@@ -1451,7 +1451,7 @@ trimmed_var_int64(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
@@ -1483,7 +1483,7 @@ trimmed_var_numeric(PG_FUNCTION_ARGS)
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	cnt = create_numeric(to - from);
@@ -1524,7 +1524,7 @@ trimmed_var_pop_double(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
@@ -1557,7 +1557,7 @@ trimmed_var_pop_int32(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
@@ -1590,7 +1590,7 @@ trimmed_var_pop_int64(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
@@ -1622,7 +1622,7 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	cnt = create_numeric(to - from);
@@ -1665,7 +1665,7 @@ trimmed_var_samp_double(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
@@ -1698,7 +1698,7 @@ trimmed_var_samp_int32(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
@@ -1731,7 +1731,7 @@ trimmed_var_samp_int64(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
@@ -1763,7 +1763,7 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	cnt  = create_numeric(to - from);
@@ -1809,7 +1809,7 @@ trimmed_stddev_double(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
@@ -1842,7 +1842,7 @@ trimmed_stddev_int32(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
@@ -1875,7 +1875,7 @@ trimmed_stddev_int64(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
@@ -1907,7 +1907,7 @@ trimmed_stddev_numeric(PG_FUNCTION_ARGS)
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	cnt = create_numeric(to - from);
@@ -1948,7 +1948,7 @@ trimmed_stddev_pop_double(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
@@ -1981,7 +1981,7 @@ trimmed_stddev_pop_int32(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
@@ -2014,7 +2014,7 @@ trimmed_stddev_pop_int64(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
@@ -2046,7 +2046,7 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	cnt  = create_numeric(to - from);
@@ -2090,7 +2090,7 @@ trimmed_stddev_samp_double(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
@@ -2123,7 +2123,7 @@ trimmed_stddev_samp_int32(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
@@ -2156,7 +2156,7 @@ trimmed_stddev_samp_int64(PG_FUNCTION_ARGS)
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 	cnt  = (to - from);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
@@ -2188,7 +2188,7 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-	if (from > to)
+	if (from >= to)
 		PG_RETURN_NULL();
 
 	cnt  = create_numeric(to - from);
