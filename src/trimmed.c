@@ -302,8 +302,20 @@ trimmed_append_double(PG_FUNCTION_ARGS)
 		data->nelements = 0;
 
 		/* how much to cut */
+		if (PG_ARGISNULL(2) || PG_ARGISNULL(3))
+			elog(ERROR, "both upper and lower cut must not be NULL");
+
 		data->cut_lower = PG_GETARG_FLOAT8(2);
 		data->cut_upper = PG_GETARG_FLOAT8(3);
+
+		if (data->cut_lower < 0.0 || data->cut_lower >= 1.0)
+			elog(ERROR, "lower cut needs to be between 0 and 1 (inclusive)");
+
+		if (data->cut_upper < 0.0 || data->cut_upper >= 1.0)
+			elog(ERROR, "upper cut needs to be between 0 and 1 (inclusive)");
+
+		if (data->cut_lower + data->cut_upper >= 1.0)
+			elog(ERROR, "lower and upper cut sum to >= 1.0");
 	}
 	else
 		data = (state_double*)PG_GETARG_POINTER(0);
@@ -346,8 +358,20 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
 		data->nelements = 0;
 
 		/* how much to cut */
+		if (PG_ARGISNULL(2) || PG_ARGISNULL(3))
+			elog(ERROR, "both upper and lower cut must not be NULL");
+
 		data->cut_lower = PG_GETARG_FLOAT8(2);
 		data->cut_upper = PG_GETARG_FLOAT8(3);
+
+		if (data->cut_lower < 0.0 || data->cut_lower >= 1.0)
+			elog(ERROR, "lower cut needs to be between 0 and 1 (inclusive)");
+
+		if (data->cut_upper < 0.0 || data->cut_upper >= 1.0)
+			elog(ERROR, "upper cut needs to be between 0 and 1 (inclusive)");
+
+		if (data->cut_lower + data->cut_upper >= 1.0)
+			elog(ERROR, "lower and upper cut sum to >= 1.0");
 	}
 	else
 		data = (state_int32*)PG_GETARG_POINTER(0);
@@ -390,8 +414,20 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
 		data->nelements = 0;
 
 		/* how much to cut */
+		if (PG_ARGISNULL(2) || PG_ARGISNULL(3))
+			elog(ERROR, "both upper and lower cut must not be NULL");
+
 		data->cut_lower = PG_GETARG_FLOAT8(2);
 		data->cut_upper = PG_GETARG_FLOAT8(3);
+
+		if (data->cut_lower < 0.0 || data->cut_lower >= 1.0)
+			elog(ERROR, "lower cut needs to be between 0 and 1 (inclusive)");
+
+		if (data->cut_upper < 0.0 || data->cut_upper >= 1.0)
+			elog(ERROR, "upper cut needs to be between 0 and 1 (inclusive)");
+
+		if (data->cut_lower + data->cut_upper >= 1.0)
+			elog(ERROR, "lower and upper cut sum to >= 1.0");
 	}
 	else
 		data = (state_int64*)PG_GETARG_POINTER(0);
@@ -434,8 +470,20 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 		data->nelements = 0;
 
 		/* how much to cut */
+		if (PG_ARGISNULL(2) || PG_ARGISNULL(3))
+			elog(ERROR, "both upper and lower cut must not be NULL");
+
 		data->cut_lower = PG_GETARG_FLOAT8(2);
 		data->cut_upper = PG_GETARG_FLOAT8(3);
+
+		if (data->cut_lower < 0.0 || data->cut_lower >= 1.0)
+			elog(ERROR, "lower cut needs to be between 0 and 1 (inclusive)");
+
+		if (data->cut_upper < 0.0 || data->cut_upper >= 1.0)
+			elog(ERROR, "upper cut needs to be between 0 and 1 (inclusive)");
+
+		if (data->cut_lower + data->cut_upper >= 1.0)
+			elog(ERROR, "lower and upper cut sum to >= 1.0");
 	}
 	else
 		data = (state_numeric*)PG_GETARG_POINTER(0);
