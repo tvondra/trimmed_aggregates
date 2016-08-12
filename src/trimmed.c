@@ -47,34 +47,34 @@ PG_MODULE_MAGIC;
 #if (PG_VERSION_NUM >= 90000)
 
 #define GET_AGG_CONTEXT(fname, fcinfo, aggcontext)  \
-    if (! AggCheckCallContext(fcinfo, &aggcontext)) {   \
-        elog(ERROR, "%s called in non-aggregate context", fname);  \
-    }
+	if (! AggCheckCallContext(fcinfo, &aggcontext)) {   \
+		elog(ERROR, "%s called in non-aggregate context", fname);  \
+	}
 
 #define CHECK_AGG_CONTEXT(fname, fcinfo)  \
-    if (! AggCheckCallContext(fcinfo, NULL)) {   \
-        elog(ERROR, "%s called in non-aggregate context", fname);  \
-    }
+	if (! AggCheckCallContext(fcinfo, NULL)) {   \
+		elog(ERROR, "%s called in non-aggregate context", fname);  \
+	}
 
 #elif (PG_VERSION_NUM >= 80400)
 
 #define GET_AGG_CONTEXT(fname, fcinfo, aggcontext)  \
-    if (fcinfo->context && IsA(fcinfo->context, AggState)) {  \
-        aggcontext = ((AggState *) fcinfo->context)->aggcontext;  \
-    } else if (fcinfo->context && IsA(fcinfo->context, WindowAggState)) {  \
-        aggcontext = ((WindowAggState *) fcinfo->context)->wincontext;  \
-    } else {  \
-        elog(ERROR, "%s called in non-aggregate context", fname);  \
-        aggcontext = NULL;  \
-    }
+	if (fcinfo->context && IsA(fcinfo->context, AggState)) {  \
+		aggcontext = ((AggState *) fcinfo->context)->aggcontext;  \
+	} else if (fcinfo->context && IsA(fcinfo->context, WindowAggState)) {  \
+		aggcontext = ((WindowAggState *) fcinfo->context)->wincontext;  \
+	} else {  \
+		elog(ERROR, "%s called in non-aggregate context", fname);  \
+		aggcontext = NULL;  \
+	}
 
 #define CHECK_AGG_CONTEXT(fname, fcinfo)  \
-    if (!(fcinfo->context &&  \
-        (IsA(fcinfo->context, AggState) ||  \
-        IsA(fcinfo->context, WindowAggState))))  \
-    {  \
-        elog(ERROR, "%s called in non-aggregate context", fname);  \
-    }
+	if (!(fcinfo->context &&  \
+		(IsA(fcinfo->context, AggState) ||  \
+		IsA(fcinfo->context, WindowAggState))))  \
+	{  \
+		elog(ERROR, "%s called in non-aggregate context", fname);  \
+	}
 
 #endif
 
@@ -87,49 +87,49 @@ PG_MODULE_MAGIC;
 
 typedef struct struct_double {
 
-    int maxelements;
-    int nelements;
+	int		maxelements;
+	int		nelements;
 
-    double cut_lower;
-    double cut_upper;
+	double	cut_lower;
+	double	cut_upper;
 
-    double * elements;
+	double *elements;
 
 } struct_double;
 
 typedef struct struct_int32 {
 
-    int maxelements;
-    int nelements;
+	int		maxelements;
+	int		nelements;
 
-    double cut_lower;
-    double cut_upper;
+	double	cut_lower;
+	double	cut_upper;
 
-    int32  * elements;
+	int32  *elements;
 
 } struct_int32;
 
 typedef struct struct_int64 {
 
-    int maxelements;
-    int nelements;
+	int		maxelements;
+	int		nelements;
 
-    double cut_lower;
-    double cut_upper;
+	double	cut_lower;
+	double	cut_upper;
 
-    int64  * elements;
+	int64  *elements;
 
 } struct_int64;
 
 typedef struct struct_numeric {
 
-    int maxelements;
-    int nelements;
+	int		maxelements;
+	int		nelements;
 
-    double cut_lower;
-    double cut_upper;
+	double	cut_lower;
+	double	cut_upper;
 
-    Numeric * elements;
+	Numeric *elements;
 
 } struct_numeric;
 
@@ -311,47 +311,47 @@ Datum
 trimmed_append_double(PG_FUNCTION_ARGS)
 {
 
-    struct_double * data;
+	struct_double * data;
 
-    double element;
+	double element;
 
-    MemoryContext oldcontext;
-    MemoryContext aggcontext;
+	MemoryContext oldcontext;
+	MemoryContext aggcontext;
 
-    GET_AGG_CONTEXT("quantile_append_double", fcinfo, aggcontext);
+	GET_AGG_CONTEXT("quantile_append_double", fcinfo, aggcontext);
 
-    oldcontext = MemoryContextSwitchTo(aggcontext);
+	oldcontext = MemoryContextSwitchTo(aggcontext);
 
-    if (PG_ARGISNULL(0)) {
+	if (PG_ARGISNULL(0)) {
 
-        data = (struct_double*)palloc(sizeof(struct_double));
-        data->elements  = (double*)palloc(SLICE_SIZE*sizeof(double));
-        data->maxelements = SLICE_SIZE;
-        data->nelements = 0;
+		data = (struct_double*)palloc(sizeof(struct_double));
+		data->elements  = (double*)palloc(SLICE_SIZE*sizeof(double));
+		data->maxelements = SLICE_SIZE;
+		data->nelements = 0;
 
-        /* how much to cut */
-        data->cut_lower = PG_GETARG_FLOAT8(2);
-        data->cut_upper = PG_GETARG_FLOAT8(3);
+		/* how much to cut */
+		data->cut_lower = PG_GETARG_FLOAT8(2);
+		data->cut_upper = PG_GETARG_FLOAT8(3);
 
-    } else {
-        data = (struct_double*)PG_GETARG_POINTER(0);
-    }
+	} else {
+		data = (struct_double*)PG_GETARG_POINTER(0);
+	}
 
-    if (! PG_ARGISNULL(1)) {
+	if (! PG_ARGISNULL(1)) {
 
-        element = PG_GETARG_FLOAT8(1);
+		element = PG_GETARG_FLOAT8(1);
 
-        if (data->nelements > data->maxelements-1) {
-            data->elements = (double*)repalloc(data->elements, sizeof(double)*(data->maxelements + SLICE_SIZE));
-            data->maxelements = data->maxelements + SLICE_SIZE;
-        }
+		if (data->nelements > data->maxelements-1) {
+			data->elements = (double*)repalloc(data->elements, sizeof(double)*(data->maxelements + SLICE_SIZE));
+			data->maxelements = data->maxelements + SLICE_SIZE;
+		}
 
-        data->elements[data->nelements++] = element;
-    }
+		data->elements[data->nelements++] = element;
+	}
 
-    MemoryContextSwitchTo(oldcontext);
+	MemoryContextSwitchTo(oldcontext);
 
-    PG_RETURN_POINTER(data);
+	PG_RETURN_POINTER(data);
 
 }
 
@@ -359,48 +359,48 @@ Datum
 trimmed_append_int32(PG_FUNCTION_ARGS)
 {
 
-    struct_int32 * data;
+	struct_int32 * data;
 
-    int32 element;
+	int32 element;
 
-    MemoryContext oldcontext;
-    MemoryContext aggcontext;
+	MemoryContext oldcontext;
+	MemoryContext aggcontext;
 
-    GET_AGG_CONTEXT("quantile_append_int32", fcinfo, aggcontext);
+	GET_AGG_CONTEXT("quantile_append_int32", fcinfo, aggcontext);
 
-    oldcontext = MemoryContextSwitchTo(aggcontext);
+	oldcontext = MemoryContextSwitchTo(aggcontext);
 
-    if (PG_ARGISNULL(0)) {
+	if (PG_ARGISNULL(0)) {
 
-        data = (struct_int32*)palloc(sizeof(struct_int32));
-        data->elements  = (int32*)palloc(SLICE_SIZE*sizeof(int32));
-        data->maxelements = SLICE_SIZE;
-        data->nelements = 0;
+		data = (struct_int32*)palloc(sizeof(struct_int32));
+		data->elements  = (int32*)palloc(SLICE_SIZE*sizeof(int32));
+		data->maxelements = SLICE_SIZE;
+		data->nelements = 0;
 
-        /* how much to cut */
-        data->cut_lower = PG_GETARG_FLOAT8(2);
-        data->cut_upper = PG_GETARG_FLOAT8(3);
+		/* how much to cut */
+		data->cut_lower = PG_GETARG_FLOAT8(2);
+		data->cut_upper = PG_GETARG_FLOAT8(3);
 
-    } else {
-        data = (struct_int32*)PG_GETARG_POINTER(0);
-    }
+	} else {
+		data = (struct_int32*)PG_GETARG_POINTER(0);
+	}
 
-    if (! PG_ARGISNULL(1)) {
+	if (! PG_ARGISNULL(1)) {
 
-        element = PG_GETARG_INT32(1);
+		element = PG_GETARG_INT32(1);
 
-        if (data->nelements > data->maxelements-1) {
-            data->elements = (int32*)repalloc(data->elements, sizeof(int32)*(data->maxelements + SLICE_SIZE));
-            data->maxelements = data->maxelements + SLICE_SIZE;
-        }
+		if (data->nelements > data->maxelements-1) {
+			data->elements = (int32*)repalloc(data->elements, sizeof(int32)*(data->maxelements + SLICE_SIZE));
+			data->maxelements = data->maxelements + SLICE_SIZE;
+		}
 
-        data->elements[data->nelements++] = element;
+		data->elements[data->nelements++] = element;
 
-    }
+	}
 
-    MemoryContextSwitchTo(oldcontext);
+	MemoryContextSwitchTo(oldcontext);
 
-    PG_RETURN_POINTER(data);
+	PG_RETURN_POINTER(data);
 
 }
 
@@ -408,48 +408,48 @@ Datum
 trimmed_append_int64(PG_FUNCTION_ARGS)
 {
 
-    struct_int64 * data;
+	struct_int64 * data;
 
-    int64 element;
+	int64 element;
 
-    MemoryContext oldcontext;
-    MemoryContext aggcontext;
+	MemoryContext oldcontext;
+	MemoryContext aggcontext;
 
-    GET_AGG_CONTEXT("quantile_append_64", fcinfo, aggcontext);
+	GET_AGG_CONTEXT("quantile_append_64", fcinfo, aggcontext);
 
-    oldcontext = MemoryContextSwitchTo(aggcontext);
+	oldcontext = MemoryContextSwitchTo(aggcontext);
 
-    if (PG_ARGISNULL(0)) {
+	if (PG_ARGISNULL(0)) {
 
-        data = (struct_int64*)palloc(sizeof(struct_int64));
-        data->elements  = (int64*)palloc(SLICE_SIZE*sizeof(int64));
-        data->maxelements = SLICE_SIZE;
-        data->nelements = 0;
+		data = (struct_int64*)palloc(sizeof(struct_int64));
+		data->elements  = (int64*)palloc(SLICE_SIZE*sizeof(int64));
+		data->maxelements = SLICE_SIZE;
+		data->nelements = 0;
 
-        /* how much to cut */
-        data->cut_lower = PG_GETARG_FLOAT8(2);
-        data->cut_upper = PG_GETARG_FLOAT8(3);
+		/* how much to cut */
+		data->cut_lower = PG_GETARG_FLOAT8(2);
+		data->cut_upper = PG_GETARG_FLOAT8(3);
 
-    } else {
-        data = (struct_int64*)PG_GETARG_POINTER(0);
-    }
+	} else {
+		data = (struct_int64*)PG_GETARG_POINTER(0);
+	}
 
-    if (! PG_ARGISNULL(1)) {
+	if (! PG_ARGISNULL(1)) {
 
-        element = PG_GETARG_INT64(1);
+		element = PG_GETARG_INT64(1);
 
-        if (data->nelements > data->maxelements-1) {
-            data->elements = (int64*)repalloc(data->elements, sizeof(int64)*(data->maxelements + SLICE_SIZE));
-            data->maxelements = data->maxelements + SLICE_SIZE;
-        }
+		if (data->nelements > data->maxelements-1) {
+			data->elements = (int64*)repalloc(data->elements, sizeof(int64)*(data->maxelements + SLICE_SIZE));
+			data->maxelements = data->maxelements + SLICE_SIZE;
+		}
 
-        data->elements[data->nelements++] = element;
+		data->elements[data->nelements++] = element;
 
-    }
+	}
 
-    MemoryContextSwitchTo(oldcontext);
+	MemoryContextSwitchTo(oldcontext);
 
-    PG_RETURN_POINTER(data);
+	PG_RETURN_POINTER(data);
 
 }
 
@@ -457,48 +457,48 @@ Datum
 trimmed_append_numeric(PG_FUNCTION_ARGS)
 {
 
-    struct_numeric * data;
+	struct_numeric * data;
 
-    Numeric element;
+	Numeric element;
 
-    MemoryContext oldcontext;
-    MemoryContext aggcontext;
+	MemoryContext oldcontext;
+	MemoryContext aggcontext;
 
-    GET_AGG_CONTEXT("trimmed_append_numeric", fcinfo, aggcontext);
+	GET_AGG_CONTEXT("trimmed_append_numeric", fcinfo, aggcontext);
 
-    oldcontext = MemoryContextSwitchTo(aggcontext);
+	oldcontext = MemoryContextSwitchTo(aggcontext);
 
-    if (PG_ARGISNULL(0)) {
+	if (PG_ARGISNULL(0)) {
 
-        data = (struct_numeric*)palloc(sizeof(struct_numeric));
-        data->elements  = (Numeric*)palloc(SLICE_SIZE*sizeof(Numeric));
-        data->maxelements = SLICE_SIZE;
-        data->nelements = 0;
+		data = (struct_numeric*)palloc(sizeof(struct_numeric));
+		data->elements  = (Numeric*)palloc(SLICE_SIZE*sizeof(Numeric));
+		data->maxelements = SLICE_SIZE;
+		data->nelements = 0;
 
-        /* how much to cut */
-        data->cut_lower = PG_GETARG_FLOAT8(2);
-        data->cut_upper = PG_GETARG_FLOAT8(3);
+		/* how much to cut */
+		data->cut_lower = PG_GETARG_FLOAT8(2);
+		data->cut_upper = PG_GETARG_FLOAT8(3);
 
-    } else {
-        data = (struct_numeric*)PG_GETARG_POINTER(0);
-    }
+	} else {
+		data = (struct_numeric*)PG_GETARG_POINTER(0);
+	}
 
-    if (! PG_ARGISNULL(1)) {
+	if (! PG_ARGISNULL(1)) {
 
-        element = PG_GETARG_NUMERIC(1);
+		element = PG_GETARG_NUMERIC(1);
 
-        if (data->nelements > data->maxelements-1) {
-            data->elements = (Numeric*)repalloc(data->elements, sizeof(Numeric)*(data->maxelements + SLICE_SIZE));
-            data->maxelements = data->maxelements + SLICE_SIZE;
-        }
+		if (data->nelements > data->maxelements-1) {
+			data->elements = (Numeric*)repalloc(data->elements, sizeof(Numeric)*(data->maxelements + SLICE_SIZE));
+			data->maxelements = data->maxelements + SLICE_SIZE;
+		}
 
-        data->elements[data->nelements++] = DatumGetNumeric(datumCopy(NumericGetDatum(element), false, -1));
+		data->elements[data->nelements++] = DatumGetNumeric(datumCopy(NumericGetDatum(element), false, -1));
 
-    }
+	}
 
-    MemoryContextSwitchTo(oldcontext);
+	MemoryContextSwitchTo(oldcontext);
 
-    PG_RETURN_POINTER(data);
+	PG_RETURN_POINTER(data);
 
 }
 
@@ -992,35 +992,35 @@ Datum
 trimmed_avg_double(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  result = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  result = 0;
+	int	 from, to, cnt;
 
-    struct_double * data;
+	struct_double * data;
 
-    CHECK_AGG_CONTEXT("trimmed_avg_double", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_avg_double", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
-    for (i = from; i < to; i++) {
-        result = result + data->elements[i]/cnt;
-    }
+	for (i = from; i < to; i++) {
+		result = result + data->elements[i]/cnt;
+	}
 
-    PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(result);
 
 }
 
@@ -1028,58 +1028,58 @@ Datum
 trimmed_double_array(PG_FUNCTION_ARGS)
 {
 
-    int     i;
+	int	 i;
 
-    /* average, var_pop, var_samp, variance, stddev_pop, stddev_samp, stddev */
-    double  result[7] = {0, 0, 0, 0, 0, 0, 0};
+	/* average, var_pop, var_samp, variance, stddev_pop, stddev_samp, stddev */
+	double  result[7] = {0, 0, 0, 0, 0, 0, 0};
 
-    double  sum_x = 0, sum_x2 = 0;
-    int     from, to, cnt;
+	double  sum_x = 0, sum_x2 = 0;
+	int	 from, to, cnt;
 
-    struct_double * data;
+	struct_double * data;
 
-    CHECK_AGG_CONTEXT("trimmed_double_array", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_double_array", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
-    /* average */
-    result[0] = 0;
-    result[1] = 1;
-    result[2] = 2;
-    for (i = from; i < to; i++) {
-        result[0] += data->elements[i]/cnt;
-        sum_x = sum_x + data->elements[i];
-        sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
-    }
+	/* average */
+	result[0] = 0;
+	result[1] = 1;
+	result[2] = 2;
+	for (i = from; i < to; i++) {
+		result[0] += data->elements[i]/cnt;
+		sum_x = sum_x + data->elements[i];
+		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+	}
 
-    result[1] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt);       /* var_pop */
-    result[2] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)); /* var_samp */
+	result[1] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt);	   /* var_pop */
+	result[2] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)); /* var_samp */
 
-    /* variance */
-    result[3] = 0;
-    for (i = from; i < to; i++) {
-        result[3] += (data->elements[i] - result[0])*(data->elements[i] - result[0])/cnt;
-    }
+	/* variance */
+	result[3] = 0;
+	for (i = from; i < to; i++) {
+		result[3] += (data->elements[i] - result[0])*(data->elements[i] - result[0])/cnt;
+	}
 
-    result[4] = sqrt(result[1]); /* stddev_pop */
-    result[5] = sqrt(result[2]); /* stddev_samp */
-    result[6] = sqrt(result[3]); /* stddev */
+	result[4] = sqrt(result[1]); /* stddev_pop */
+	result[5] = sqrt(result[2]); /* stddev_samp */
+	result[6] = sqrt(result[3]); /* stddev */
 
-    return double_to_array(fcinfo, result, 7);
+	return double_to_array(fcinfo, result, 7);
 
 }
 
@@ -1087,35 +1087,35 @@ Datum
 trimmed_avg_int32(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  result = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  result = 0;
+	int	 from, to, cnt;
 
-    struct_int32 * data;
+	struct_int32 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_avg_int32", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_avg_int32", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
-    for (i = from; i < to; i++) {
-        result = result + ((double)data->elements[i])/cnt;
-    }
+	for (i = from; i < to; i++) {
+		result = result + ((double)data->elements[i])/cnt;
+	}
 
-    PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(result);
 
 }
 
@@ -1123,57 +1123,57 @@ Datum
 trimmed_int32_array(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    /* average, var_pop, var_samp, variance, stddev_pop, stddev_samp, stddev */
-    double  result[7] = {0, 0, 0, 0, 0, 0, 0};
+	int	 i;
+	/* average, var_pop, var_samp, variance, stddev_pop, stddev_samp, stddev */
+	double  result[7] = {0, 0, 0, 0, 0, 0, 0};
 
-    double  sum_x = 0, sum_x2 = 0;
-    int     from, to, cnt;
+	double  sum_x = 0, sum_x2 = 0;
+	int	 from, to, cnt;
 
-    struct_int32 * data;
+	struct_int32 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_int32_array", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_int32_array", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
-    /* average */
-    result[0] = 0;
-    result[1] = 0;
-    result[2] = 0;
-    for (i = from; i < to; i++) {
-        result[0] += (double)data->elements[i]/cnt;
-        sum_x = sum_x + data->elements[i];
-        sum_x2 = sum_x2 + ((double)data->elements[i])*((double)data->elements[i]);
-    }
+	/* average */
+	result[0] = 0;
+	result[1] = 0;
+	result[2] = 0;
+	for (i = from; i < to; i++) {
+		result[0] += (double)data->elements[i]/cnt;
+		sum_x = sum_x + data->elements[i];
+		sum_x2 = sum_x2 + ((double)data->elements[i])*((double)data->elements[i]);
+	}
 
-    result[1] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt);       /* var_pop */
-    result[2] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)); /* var_samp */
+	result[1] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt);	   /* var_pop */
+	result[2] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)); /* var_samp */
 
-    /* variance */
-    result[3] = 0;
-    for (i = from; i < to; i++) {
-        result[3] += ((double)data->elements[i] - result[0])*((double)data->elements[i] - result[0])/cnt;
-    }
+	/* variance */
+	result[3] = 0;
+	for (i = from; i < to; i++) {
+		result[3] += ((double)data->elements[i] - result[0])*((double)data->elements[i] - result[0])/cnt;
+	}
 
-    result[4] = sqrt(result[1]); /* stddev_pop */
-    result[5] = sqrt(result[2]); /* stddev_samp */
-    result[6] = sqrt(result[3]); /* stddev */
+	result[4] = sqrt(result[1]); /* stddev_pop */
+	result[5] = sqrt(result[2]); /* stddev_samp */
+	result[6] = sqrt(result[3]); /* stddev */
 
-    return double_to_array(fcinfo, result, 7);
+	return double_to_array(fcinfo, result, 7);
 
 }
 
@@ -1181,35 +1181,35 @@ Datum
 trimmed_avg_int64(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  result = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  result = 0;
+	int	 from, to, cnt;
 
-    struct_int64 * data;
+	struct_int64 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_avg_int64", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_avg_int64", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
-    for (i = from; i < to; i++) {
-        result = result + ((double)data->elements[i])/cnt;
-    }
+	for (i = from; i < to; i++) {
+		result = result + ((double)data->elements[i])/cnt;
+	}
 
-    PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(result);
 
 }
 
@@ -1217,57 +1217,57 @@ Datum
 trimmed_int64_array(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    /* average, var_pop, var_samp, variance, stddev_pop, stddev_samp, stddev */
-    double  result[7] = {0, 0, 0, 0, 0, 0, 0};
+	int	 i;
+	/* average, var_pop, var_samp, variance, stddev_pop, stddev_samp, stddev */
+	double  result[7] = {0, 0, 0, 0, 0, 0, 0};
 
-    double  sum_x = 0, sum_x2 = 0;
-    int     from, to, cnt;
+	double  sum_x = 0, sum_x2 = 0;
+	int	 from, to, cnt;
 
-    struct_int64 * data;
+	struct_int64 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_int64_array", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_int64_array", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
-    /* average */
-    result[0] = 0;
-    result[1] = 0;
-    result[2] = 0;
-    for (i = from; i < to; i++) {
-        result[0] += (double)data->elements[i]/cnt;
-        sum_x = sum_x + data->elements[i];
-        sum_x2 = sum_x2 + ((double)data->elements[i])*((double)data->elements[i]);
-    }
+	/* average */
+	result[0] = 0;
+	result[1] = 0;
+	result[2] = 0;
+	for (i = from; i < to; i++) {
+		result[0] += (double)data->elements[i]/cnt;
+		sum_x = sum_x + data->elements[i];
+		sum_x2 = sum_x2 + ((double)data->elements[i])*((double)data->elements[i]);
+	}
 
-    result[1] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt);       /* var_pop */
-    result[2] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)); /* var_samp */
+	result[1] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt);	   /* var_pop */
+	result[2] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)); /* var_samp */
 
-    /* variance */
-    result[3] = 0;
-    for (i = from; i < to; i++) {
-        result[3] += ((double)data->elements[i] - result[0])*((double)data->elements[i] - result[0])/cnt;
-    }
+	/* variance */
+	result[3] = 0;
+	for (i = from; i < to; i++) {
+		result[3] += ((double)data->elements[i] - result[0])*((double)data->elements[i] - result[0])/cnt;
+	}
 
-    result[4] = sqrt(result[1]); /* stddev_pop */
-    result[5] = sqrt(result[2]); /* stddev_samp */
-    result[6] = sqrt(result[3]); /* stddev */
+	result[4] = sqrt(result[1]); /* stddev_pop */
+	result[5] = sqrt(result[2]); /* stddev_samp */
+	result[6] = sqrt(result[3]); /* stddev */
 
-    return double_to_array(fcinfo, result, 7);
+	return double_to_array(fcinfo, result, 7);
 
 }
 
@@ -1275,38 +1275,38 @@ Datum
 trimmed_avg_numeric(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    Numeric result, cnt;
-    int     from, to;
+	int	 i;
+	Numeric result, cnt;
+	int	 from, to;
 
-    struct_numeric * data;
+	struct_numeric * data;
 
-    CHECK_AGG_CONTEXT("trimmed_avg_numeric", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_avg_numeric", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    /* create numeric values */
-    cnt    = create_numeric(to-from);
-    result = create_numeric(0);
+	/* create numeric values */
+	cnt	= create_numeric(to-from);
+	result = create_numeric(0);
 
-    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
-    for (i = from; i < to; i++) {
-        result = add_numeric(result, div_numeric(data->elements[i], cnt));
-    }
+	for (i = from; i < to; i++) {
+		result = add_numeric(result, div_numeric(data->elements[i], cnt));
+	}
 
-    PG_RETURN_NUMERIC(result);
+	PG_RETURN_NUMERIC(result);
 
 }
 
@@ -1314,67 +1314,67 @@ Datum
 trimmed_numeric_array(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    /* average, var_pop, var_samp, variance, stddev_pop, stddev_samp, stddev */
-    Numeric result[7];
-    Numeric sum_x, sum_x2;
+	int	 i;
+	/* average, var_pop, var_samp, variance, stddev_pop, stddev_samp, stddev */
+	Numeric result[7];
+	Numeric sum_x, sum_x2;
 
-    Numeric cntNumeric, cntNumeric_1;
-    int     from, to;
+	Numeric cntNumeric, cntNumeric_1;
+	int	 from, to;
 
-    struct_numeric * data;
+	struct_numeric * data;
 
-    CHECK_AGG_CONTEXT("trimmed_numeric_array", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_numeric_array", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    /* create numeric values */
-    cntNumeric = create_numeric(to-from);
-    cntNumeric_1 = create_numeric(to-from-1);
+	/* create numeric values */
+	cntNumeric = create_numeric(to-from);
+	cntNumeric_1 = create_numeric(to-from-1);
 
-    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
-    /* average */
-    result[0] = create_numeric(0);
-    result[1] = create_numeric(0);
-    result[2] = create_numeric(0);
+	/* average */
+	result[0] = create_numeric(0);
+	result[1] = create_numeric(0);
+	result[2] = create_numeric(0);
 
-    sum_x   = create_numeric(0);
-    sum_x2  = create_numeric(0);
+	sum_x   = create_numeric(0);
+	sum_x2  = create_numeric(0);
 
-    // cntNumeric = DatumGetNumeric(DirectFunctionCall1(int8_numeric, Int32GetDatum(cnt)));
+	// cntNumeric = DatumGetNumeric(DirectFunctionCall1(int8_numeric, Int32GetDatum(cnt)));
 
-    for (i = from; i < to; i++) {
-        result[0]   = add_numeric(result[0], div_numeric(data->elements[i], cntNumeric));
-        sum_x       = add_numeric(sum_x, data->elements[i]);
-        sum_x2      = add_numeric(sum_x2, mul_numeric(data->elements[i], data->elements[i]));
-    }
+	for (i = from; i < to; i++) {
+		result[0]   = add_numeric(result[0], div_numeric(data->elements[i], cntNumeric));
+		sum_x	   = add_numeric(sum_x, data->elements[i]);
+		sum_x2	  = add_numeric(sum_x2, mul_numeric(data->elements[i], data->elements[i]));
+	}
 
-    result[1] = div_numeric(sub_numeric(mul_numeric(cntNumeric, sum_x2), mul_numeric(sum_x, sum_x)), mul_numeric(cntNumeric, cntNumeric)); /* var_pop */
-    result[2] = div_numeric(sub_numeric(mul_numeric(cntNumeric, sum_x2), mul_numeric(sum_x, sum_x)), mul_numeric(cntNumeric, cntNumeric_1)); /* var_samp */
+	result[1] = div_numeric(sub_numeric(mul_numeric(cntNumeric, sum_x2), mul_numeric(sum_x, sum_x)), mul_numeric(cntNumeric, cntNumeric)); /* var_pop */
+	result[2] = div_numeric(sub_numeric(mul_numeric(cntNumeric, sum_x2), mul_numeric(sum_x, sum_x)), mul_numeric(cntNumeric, cntNumeric_1)); /* var_samp */
 
-    /* variance */
-    result[3] = create_numeric(0);
-    for (i = from; i < to; i++) {
-        result[3]   = add_numeric(result[3], div_numeric(mul_numeric(sub_numeric(data->elements[i],result[0]), sub_numeric(data->elements[i],result[0])), cntNumeric));
-    }
+	/* variance */
+	result[3] = create_numeric(0);
+	for (i = from; i < to; i++) {
+		result[3]   = add_numeric(result[3], div_numeric(mul_numeric(sub_numeric(data->elements[i],result[0]), sub_numeric(data->elements[i],result[0])), cntNumeric));
+	}
 
-    result[4] = sqrt_numeric(result[1]); /* stddev_pop */
-    result[5] = sqrt_numeric(result[2]); /* stddev_samp */
-    result[6] = sqrt_numeric(result[3]); /* stddev */
+	result[4] = sqrt_numeric(result[1]); /* stddev_pop */
+	result[5] = sqrt_numeric(result[2]); /* stddev_samp */
+	result[6] = sqrt_numeric(result[3]); /* stddev */
 
-    return numeric_to_array(fcinfo, result, 7);
+	return numeric_to_array(fcinfo, result, 7);
 
 }
 
@@ -1382,40 +1382,40 @@ Datum
 trimmed_var_double(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  result = 0;
-    double  avg = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  result = 0;
+	double  avg = 0;
+	int	 from, to, cnt;
 
-    struct_double * data;
+	struct_double * data;
 
-    CHECK_AGG_CONTEXT("trimmed_var_double", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_var_double", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
-    for (i = from; i < to; i++) {
-        avg = avg + data->elements[i]/cnt;
-    }
+	for (i = from; i < to; i++) {
+		avg = avg + data->elements[i]/cnt;
+	}
 
-    for (i = from; i < to; i++) {
-        result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
-    }
+	for (i = from; i < to; i++) {
+		result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
+	}
 
-    PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(result);
 
 }
 
@@ -1423,40 +1423,40 @@ Datum
 trimmed_var_int32(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  result = 0;
-    double  avg = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  result = 0;
+	double  avg = 0;
+	int	 from, to, cnt;
 
-    struct_int32 * data;
+	struct_int32 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_var_int32", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_var_int32", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
-    for (i = from; i < to; i++) {
-        avg = avg + ((double)data->elements[i])/cnt;
-    }
+	for (i = from; i < to; i++) {
+		avg = avg + ((double)data->elements[i])/cnt;
+	}
 
-    for (i = from; i < to; i++) {
-        result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
-    }
+	for (i = from; i < to; i++) {
+		result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
+	}
 
-    PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(result);
 
 }
 
@@ -1464,40 +1464,40 @@ Datum
 trimmed_var_int64(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  result = 0;
-    double  avg = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  result = 0;
+	double  avg = 0;
+	int	 from, to, cnt;
 
-    struct_int64 * data;
+	struct_int64 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_var_int64", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_var_int64", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
-    for (i = from; i < to; i++) {
-        avg = avg + ((double)data->elements[i])/cnt;
-    }
+	for (i = from; i < to; i++) {
+		avg = avg + ((double)data->elements[i])/cnt;
+	}
 
-    for (i = from; i < to; i++) {
-        result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
-    }
+	for (i = from; i < to; i++) {
+		result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
+	}
 
-    PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(result);
 
 }
 
@@ -1505,42 +1505,42 @@ Datum
 trimmed_var_numeric(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    Numeric result, avg, cnt;
-    int     from, to;
+	int	 i;
+	Numeric result, avg, cnt;
+	int	 from, to;
 
-    struct_numeric * data;
+	struct_numeric * data;
 
-    CHECK_AGG_CONTEXT("trimmed_var_numeric", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_var_numeric", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    cnt = create_numeric(to - from);
-    avg = create_numeric(0);
-    result = create_numeric(0);
+	cnt = create_numeric(to - from);
+	avg = create_numeric(0);
+	result = create_numeric(0);
 
-    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
-    for (i = from; i < to; i++) {
-        avg = add_numeric(avg, div_numeric(data->elements[i], cnt));
-    }
+	for (i = from; i < to; i++) {
+		avg = add_numeric(avg, div_numeric(data->elements[i], cnt));
+	}
 
-    for (i = from; i < to; i++) {
-        result = add_numeric(result, div_numeric(pow_numeric(sub_numeric(data->elements[i],avg),2),cnt));
-    }
+	for (i = from; i < to; i++) {
+		result = add_numeric(result, div_numeric(pow_numeric(sub_numeric(data->elements[i],avg),2),cnt));
+	}
 
-    PG_RETURN_NUMERIC(result);
+	PG_RETURN_NUMERIC(result);
 
 }
 
@@ -1548,36 +1548,36 @@ Datum
 trimmed_var_pop_double(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  sum_x = 0, sum_x2 = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  sum_x = 0, sum_x2 = 0;
+	int	 from, to, cnt;
 
-    struct_double * data;
+	struct_double * data;
 
-    CHECK_AGG_CONTEXT("trimmed_var_pop_double", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_var_pop_double", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = sum_x + data->elements[i];
-        sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
-    }
+	for (i = from; i < to; i++) {
+		sum_x = sum_x + data->elements[i];
+		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+	}
 
-    PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt));
+	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt));
 
 }
 
@@ -1585,36 +1585,36 @@ Datum
 trimmed_var_pop_int32(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  sum_x = 0, sum_x2 = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  sum_x = 0, sum_x2 = 0;
+	int	 from, to, cnt;
 
-    struct_int32 * data;
+	struct_int32 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_var_pop_int32", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_var_pop_int32", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = sum_x + data->elements[i];
-        sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
-    }
+	for (i = from; i < to; i++) {
+		sum_x = sum_x + data->elements[i];
+		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+	}
 
-    PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt));
+	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt));
 
 }
 
@@ -1622,36 +1622,36 @@ Datum
 trimmed_var_pop_int64(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  sum_x = 0, sum_x2 = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  sum_x = 0, sum_x2 = 0;
+	int	 from, to, cnt;
 
-    struct_int64 * data;
+	struct_int64 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_var_pop_int64", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_var_pop_int64", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = sum_x + data->elements[i];
-        sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
-    }
+	for (i = from; i < to; i++) {
+		sum_x = sum_x + data->elements[i];
+		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+	}
 
-    PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt));
+	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt));
 
 }
 
@@ -1659,40 +1659,40 @@ Datum
 trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    Numeric sum_x, sum_x2, cnt;
-    int     from, to;
+	int	 i;
+	Numeric sum_x, sum_x2, cnt;
+	int	 from, to;
 
-    struct_numeric * data;
+	struct_numeric * data;
 
-    CHECK_AGG_CONTEXT("trimmed_var_pop_numeric", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_var_pop_numeric", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    cnt  = create_numeric(to - from);
-    sum_x = create_numeric(0);
-    sum_x2 = create_numeric(0);
+	cnt  = create_numeric(to - from);
+	sum_x = create_numeric(0);
+	sum_x2 = create_numeric(0);
 
-    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = add_numeric(sum_x, data->elements[i]);
-        sum_x2 = add_numeric(sum_x2, mul_numeric(data->elements[i], data->elements[i]));
-    }
+	for (i = from; i < to; i++) {
+		sum_x = add_numeric(sum_x, data->elements[i]);
+		sum_x2 = add_numeric(sum_x2, mul_numeric(data->elements[i], data->elements[i]));
+	}
 
-    PG_RETURN_NUMERIC (div_numeric(sub_numeric(mul_numeric(cnt, sum_x2), mul_numeric(sum_x, sum_x)),
-                                   mul_numeric(cnt, cnt)));
+	PG_RETURN_NUMERIC (div_numeric(sub_numeric(mul_numeric(cnt, sum_x2), mul_numeric(sum_x, sum_x)),
+								   mul_numeric(cnt, cnt)));
 
 }
 
@@ -1700,36 +1700,36 @@ Datum
 trimmed_var_samp_double(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  sum_x = 0, sum_x2 = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  sum_x = 0, sum_x2 = 0;
+	int	 from, to, cnt;
 
-    struct_double * data;
+	struct_double * data;
 
-    CHECK_AGG_CONTEXT("trimmed_var_samp_double", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_var_samp_double", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = sum_x + data->elements[i];
-        sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
-    }
+	for (i = from; i < to; i++) {
+		sum_x = sum_x + data->elements[i];
+		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+	}
 
-    PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)));
+	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)));
 
 }
 
@@ -1737,36 +1737,36 @@ Datum
 trimmed_var_samp_int32(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  sum_x = 0, sum_x2 = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  sum_x = 0, sum_x2 = 0;
+	int	 from, to, cnt;
 
-    struct_int32 * data;
+	struct_int32 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_var_samp_int32", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_var_samp_int32", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = sum_x + data->elements[i];
-        sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
-    }
+	for (i = from; i < to; i++) {
+		sum_x = sum_x + data->elements[i];
+		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+	}
 
-    PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)));
+	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)));
 
 }
 
@@ -1774,36 +1774,36 @@ Datum
 trimmed_var_samp_int64(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  sum_x = 0, sum_x2 = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  sum_x = 0, sum_x2 = 0;
+	int	 from, to, cnt;
 
-    struct_int64 * data;
+	struct_int64 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_var_samp_int64", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_var_samp_int64", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = sum_x + data->elements[i];
-        sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
-    }
+	for (i = from; i < to; i++) {
+		sum_x = sum_x + data->elements[i];
+		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+	}
 
-    PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)));
+	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)));
 
 }
 
@@ -1811,40 +1811,40 @@ Datum
 trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    Numeric sum_x, sum_x2, cnt;
-    int     from, to;
+	int	 i;
+	Numeric sum_x, sum_x2, cnt;
+	int	 from, to;
 
-    struct_numeric * data;
+	struct_numeric * data;
 
-    CHECK_AGG_CONTEXT("trimmed_var_samp_numeric", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_var_samp_numeric", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    cnt  = create_numeric(to - from);
-    sum_x = create_numeric(0);
-    sum_x2 = create_numeric(0);
+	cnt  = create_numeric(to - from);
+	sum_x = create_numeric(0);
+	sum_x2 = create_numeric(0);
 
-    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = add_numeric(sum_x, data->elements[i]);
-        sum_x2 = add_numeric(sum_x2, mul_numeric(data->elements[i], data->elements[i]));
-    }
+	for (i = from; i < to; i++) {
+		sum_x = add_numeric(sum_x, data->elements[i]);
+		sum_x2 = add_numeric(sum_x2, mul_numeric(data->elements[i], data->elements[i]));
+	}
 
-    PG_RETURN_NUMERIC (div_numeric(sub_numeric(mul_numeric(cnt, sum_x2), mul_numeric(sum_x, sum_x)),
-                                   mul_numeric(cnt, sub_numeric(cnt, create_numeric(1)))));
+	PG_RETURN_NUMERIC (div_numeric(sub_numeric(mul_numeric(cnt, sum_x2), mul_numeric(sum_x, sum_x)),
+								   mul_numeric(cnt, sub_numeric(cnt, create_numeric(1)))));
 
 }
 
@@ -1852,40 +1852,40 @@ Datum
 trimmed_stddev_double(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  result = 0;
-    double  avg = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  result = 0;
+	double  avg = 0;
+	int	 from, to, cnt;
 
-    struct_double * data;
+	struct_double * data;
 
-    CHECK_AGG_CONTEXT("trimmed_stddev_double", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_stddev_double", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
-    for (i = from; i < to; i++) {
-        avg = avg + data->elements[i]/cnt;
-    }
+	for (i = from; i < to; i++) {
+		avg = avg + data->elements[i]/cnt;
+	}
 
-    for (i = from; i < to; i++) {
-        result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
-    }
+	for (i = from; i < to; i++) {
+		result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
+	}
 
-    PG_RETURN_FLOAT8 (sqrt(result));
+	PG_RETURN_FLOAT8 (sqrt(result));
 
 }
 
@@ -1893,40 +1893,40 @@ Datum
 trimmed_stddev_int32(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  result = 0;
-    double  avg = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  result = 0;
+	double  avg = 0;
+	int	 from, to, cnt;
 
-    struct_int32 * data;
+	struct_int32 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_stddev_int32", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_stddev_int32", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
-    for (i = from; i < to; i++) {
-        avg = avg + ((double)data->elements[i])/cnt;
-    }
+	for (i = from; i < to; i++) {
+		avg = avg + ((double)data->elements[i])/cnt;
+	}
 
-    for (i = from; i < to; i++) {
-        result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
-    }
+	for (i = from; i < to; i++) {
+		result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
+	}
 
-    PG_RETURN_FLOAT8 (sqrt(result));
+	PG_RETURN_FLOAT8 (sqrt(result));
 
 }
 
@@ -1934,40 +1934,40 @@ Datum
 trimmed_stddev_int64(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  result = 0;
-    double  avg = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  result = 0;
+	double  avg = 0;
+	int	 from, to, cnt;
 
-    struct_int64 * data;
+	struct_int64 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_stddev_int64", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_stddev_int64", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
-    for (i = from; i < to; i++) {
-        avg = avg + ((double)data->elements[i])/cnt;
-    }
+	for (i = from; i < to; i++) {
+		avg = avg + ((double)data->elements[i])/cnt;
+	}
 
-    for (i = from; i < to; i++) {
-        result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
-    }
+	for (i = from; i < to; i++) {
+		result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
+	}
 
-    PG_RETURN_FLOAT8 (sqrt(result));
+	PG_RETURN_FLOAT8 (sqrt(result));
 
 }
 
@@ -1975,42 +1975,42 @@ Datum
 trimmed_stddev_numeric(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    Numeric result, avg, cnt;
-    int     from, to;
+	int	 i;
+	Numeric result, avg, cnt;
+	int	 from, to;
 
-    struct_numeric * data;
+	struct_numeric * data;
 
-    CHECK_AGG_CONTEXT("trimmed_stddev_numeric", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_stddev_numeric", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    cnt = create_numeric(to - from);
-    avg = create_numeric(0);
-    result = create_numeric(0);
+	cnt = create_numeric(to - from);
+	avg = create_numeric(0);
+	result = create_numeric(0);
 
-    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
-    for (i = from; i < to; i++) {
-        avg = add_numeric(avg, div_numeric(data->elements[i], cnt));
-    }
+	for (i = from; i < to; i++) {
+		avg = add_numeric(avg, div_numeric(data->elements[i], cnt));
+	}
 
-    for (i = from; i < to; i++) {
-        result = add_numeric(result, div_numeric(pow_numeric(sub_numeric(data->elements[i], avg), 2), cnt));
-    }
+	for (i = from; i < to; i++) {
+		result = add_numeric(result, div_numeric(pow_numeric(sub_numeric(data->elements[i], avg), 2), cnt));
+	}
 
-    PG_RETURN_NUMERIC (sqrt_numeric(result));
+	PG_RETURN_NUMERIC (sqrt_numeric(result));
 
 }
 
@@ -2018,36 +2018,36 @@ Datum
 trimmed_stddev_pop_double(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  sum_x = 0, sum_x2 = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  sum_x = 0, sum_x2 = 0;
+	int	 from, to, cnt;
 
-    struct_double * data;
+	struct_double * data;
 
-    CHECK_AGG_CONTEXT("trimmed_stddev_pop_double", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_stddev_pop_double", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = sum_x + data->elements[i];
-        sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
-    }
+	for (i = from; i < to; i++) {
+		sum_x = sum_x + data->elements[i];
+		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+	}
 
-    PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt)));
+	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt)));
 
 }
 
@@ -2055,36 +2055,36 @@ Datum
 trimmed_stddev_pop_int32(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  sum_x = 0, sum_x2 = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  sum_x = 0, sum_x2 = 0;
+	int	 from, to, cnt;
 
-    struct_int32 * data;
+	struct_int32 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_stddev_pop_int32", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_stddev_pop_int32", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = sum_x + data->elements[i];
-        sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
-    }
+	for (i = from; i < to; i++) {
+		sum_x = sum_x + data->elements[i];
+		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+	}
 
-    PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt)));
+	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt)));
 
 }
 
@@ -2092,36 +2092,36 @@ Datum
 trimmed_stddev_pop_int64(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  sum_x = 0, sum_x2 = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  sum_x = 0, sum_x2 = 0;
+	int	 from, to, cnt;
 
-    struct_int64 * data;
+	struct_int64 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_stddev_pop_int64", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_stddev_pop_int64", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = sum_x + data->elements[i];
-        sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
-    }
+	for (i = from; i < to; i++) {
+		sum_x = sum_x + data->elements[i];
+		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+	}
 
-    PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt)));
+	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt)));
 
 }
 
@@ -2129,41 +2129,41 @@ Datum
 trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    Numeric sum_x, sum_x2, cnt;
-    int     from, to;
+	int	 i;
+	Numeric sum_x, sum_x2, cnt;
+	int	 from, to;
 
-    struct_numeric * data;
+	struct_numeric * data;
 
-    CHECK_AGG_CONTEXT("trimmed_stddev_pop_numeric", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_stddev_pop_numeric", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    cnt  = create_numeric(to - from);
-    sum_x = create_numeric(0);
-    sum_x2 = create_numeric(0);
+	cnt  = create_numeric(to - from);
+	sum_x = create_numeric(0);
+	sum_x2 = create_numeric(0);
 
-    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = add_numeric(sum_x, data->elements[i]);
-        sum_x2 = add_numeric(sum_x2, mul_numeric(data->elements[i], data->elements[i]));
-    }
+	for (i = from; i < to; i++) {
+		sum_x = add_numeric(sum_x, data->elements[i]);
+		sum_x2 = add_numeric(sum_x2, mul_numeric(data->elements[i], data->elements[i]));
+	}
 
-    PG_RETURN_NUMERIC (sqrt_numeric(div_numeric(sub_numeric(mul_numeric(cnt, sum_x2),
-                                                            mul_numeric(sum_x, sum_x)),
-                                                pow_numeric(cnt, 2))));
+	PG_RETURN_NUMERIC (sqrt_numeric(div_numeric(sub_numeric(mul_numeric(cnt, sum_x2),
+															mul_numeric(sum_x, sum_x)),
+												pow_numeric(cnt, 2))));
 
 }
 
@@ -2171,36 +2171,36 @@ Datum
 trimmed_stddev_samp_double(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  sum_x = 0, sum_x2 = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  sum_x = 0, sum_x2 = 0;
+	int	 from, to, cnt;
 
-    struct_double * data;
+	struct_double * data;
 
-    CHECK_AGG_CONTEXT("trimmed_stddev_samp_double", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_stddev_samp_double", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (struct_double*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = sum_x + data->elements[i];
-        sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
-    }
+	for (i = from; i < to; i++) {
+		sum_x = sum_x + data->elements[i];
+		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+	}
 
-    PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1))));
+	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1))));
 
 }
 
@@ -2208,36 +2208,36 @@ Datum
 trimmed_stddev_samp_int32(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  sum_x = 0, sum_x2 = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  sum_x = 0, sum_x2 = 0;
+	int	 from, to, cnt;
 
-    struct_int32 * data;
+	struct_int32 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_stddev_samp_int32", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_stddev_samp_int32", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (struct_int32*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = sum_x + data->elements[i];
-        sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
-    }
+	for (i = from; i < to; i++) {
+		sum_x = sum_x + data->elements[i];
+		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+	}
 
-    PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1))));
+	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1))));
 
 }
 
@@ -2245,36 +2245,36 @@ Datum
 trimmed_stddev_samp_int64(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    double  sum_x = 0, sum_x2 = 0;
-    int     from, to, cnt;
+	int	 i;
+	double  sum_x = 0, sum_x2 = 0;
+	int	 from, to, cnt;
 
-    struct_int64 * data;
+	struct_int64 * data;
 
-    CHECK_AGG_CONTEXT("trimmed_stddev_samp_int64", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_stddev_samp_int64", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (struct_int64*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
-    cnt  = (to - from);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	cnt  = (to - from);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = sum_x + data->elements[i];
-        sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
-    }
+	for (i = from; i < to; i++) {
+		sum_x = sum_x + data->elements[i];
+		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+	}
 
-    PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1))));
+	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1))));
 
 }
 
@@ -2282,183 +2282,183 @@ Datum
 trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 {
 
-    int     i;
-    Numeric sum_x, sum_x2, cnt;
-    int     from, to;
+	int	 i;
+	Numeric sum_x, sum_x2, cnt;
+	int	 from, to;
 
-    struct_numeric * data;
+	struct_numeric * data;
 
-    CHECK_AGG_CONTEXT("trimmed_stddev_samp_numeric", fcinfo);
+	CHECK_AGG_CONTEXT("trimmed_stddev_samp_numeric", fcinfo);
 
-    if (PG_ARGISNULL(0)) {
-        PG_RETURN_NULL();
-    }
+	if (PG_ARGISNULL(0)) {
+		PG_RETURN_NULL();
+	}
 
-    data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (struct_numeric*)PG_GETARG_POINTER(0);
 
-    from = floor(data->nelements * data->cut_lower);
-    to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(data->nelements * data->cut_lower);
+	to   = data->nelements - floor(data->nelements * data->cut_upper);
 
-    if (from > to) {
-        PG_RETURN_NULL();
-    }
+	if (from > to) {
+		PG_RETURN_NULL();
+	}
 
-    cnt  = create_numeric(to - from);
-    sum_x = create_numeric(0);
-    sum_x2 = create_numeric(0);
+	cnt  = create_numeric(to - from);
+	sum_x = create_numeric(0);
+	sum_x2 = create_numeric(0);
 
-    qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
-    for (i = from; i < to; i++) {
-        sum_x = add_numeric(sum_x, data->elements[i]);
-        sum_x2 = add_numeric(sum_x2, pow_numeric(data->elements[i], 2));
-    }
+	for (i = from; i < to; i++) {
+		sum_x = add_numeric(sum_x, data->elements[i]);
+		sum_x2 = add_numeric(sum_x2, pow_numeric(data->elements[i], 2));
+	}
 
-    PG_RETURN_NUMERIC (sqrt_numeric(div_numeric(sub_numeric(mul_numeric(cnt, sum_x2),
-                                                            pow_numeric(sum_x, 2)),
-                                                mul_numeric(cnt, sub_numeric(cnt, create_numeric(1))))));
+	PG_RETURN_NUMERIC (sqrt_numeric(div_numeric(sub_numeric(mul_numeric(cnt, sum_x2),
+															pow_numeric(sum_x, 2)),
+												mul_numeric(cnt, sub_numeric(cnt, create_numeric(1))))));
 
 }
 
 static int  double_comparator(const void *a, const void *b) {
-    double af = (*(double*)a);
-    double bf = (*(double*)b);
-    return (af > bf) - (af < bf);
+	double af = (*(double*)a);
+	double bf = (*(double*)b);
+	return (af > bf) - (af < bf);
 }
 
 static int  int32_comparator(const void *a, const void *b) {
-    int32 af = (*(int32*)a);
-    int32 bf = (*(int32*)b);
-    return (af > bf) - (af < bf);
+	int32 af = (*(int32*)a);
+	int32 bf = (*(int32*)b);
+	return (af > bf) - (af < bf);
 }
 
 static int  int64_comparator(const void *a, const void *b) {
-    int64 af = (*(int64*)a);
-    int64 bf = (*(int64*)b);
-    return (af > bf) - (af < bf);
+	int64 af = (*(int64*)a);
+	int64 bf = (*(int64*)b);
+	return (af > bf) - (af < bf);
 }
 
 static int  numeric_comparator(const void *a, const void *b) {
 
-    FunctionCallInfoData fcinfo;
+	FunctionCallInfoData fcinfo;
 
-    /* set params */
-    fcinfo.nargs = 2;
-    fcinfo.arg[0] = NumericGetDatum(*(Numeric*)a);
-    fcinfo.arg[1] = NumericGetDatum(*(Numeric*)b);
-    fcinfo.argnull[0] = false;
-    fcinfo.argnull[1] = false;
+	/* set params */
+	fcinfo.nargs = 2;
+	fcinfo.arg[0] = NumericGetDatum(*(Numeric*)a);
+	fcinfo.arg[1] = NumericGetDatum(*(Numeric*)b);
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
 
-    /* return the result */
-    return DatumGetInt32(numeric_cmp(&fcinfo));
+	/* return the result */
+	return DatumGetInt32(numeric_cmp(&fcinfo));
 
 }
 
 static Numeric create_numeric(int value) {
 
-    FunctionCallInfoData fcinfo;
+	FunctionCallInfoData fcinfo;
 
-    /* set params */
-    fcinfo.nargs = 1;
-    fcinfo.arg[0] = Int32GetDatum(value);
-    fcinfo.argnull[0] = false;
+	/* set params */
+	fcinfo.nargs = 1;
+	fcinfo.arg[0] = Int32GetDatum(value);
+	fcinfo.argnull[0] = false;
 
-    /* return the result */
-    return DatumGetNumeric(int4_numeric(&fcinfo));
+	/* return the result */
+	return DatumGetNumeric(int4_numeric(&fcinfo));
 
 }
 
 static Numeric add_numeric(Numeric a, Numeric b) {
 
-    FunctionCallInfoData fcinfo;
+	FunctionCallInfoData fcinfo;
 
-    /* set params */
-    fcinfo.nargs = 2;
-    fcinfo.arg[0] = NumericGetDatum(a);
-    fcinfo.arg[1] = NumericGetDatum(b);
-    fcinfo.argnull[0] = false;
-    fcinfo.argnull[1] = false;
+	/* set params */
+	fcinfo.nargs = 2;
+	fcinfo.arg[0] = NumericGetDatum(a);
+	fcinfo.arg[1] = NumericGetDatum(b);
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
 
-    /* return the result */
-    return DatumGetNumeric(numeric_add(&fcinfo));
+	/* return the result */
+	return DatumGetNumeric(numeric_add(&fcinfo));
 
 }
 
 static Numeric div_numeric(Numeric a, Numeric b) {
 
-    FunctionCallInfoData fcinfo;
+	FunctionCallInfoData fcinfo;
 
-    /* set params */
-    fcinfo.nargs = 2;
-    fcinfo.arg[0] = NumericGetDatum(a);
-    fcinfo.arg[1] = NumericGetDatum(b);
-    fcinfo.argnull[0] = false;
-    fcinfo.argnull[1] = false;
+	/* set params */
+	fcinfo.nargs = 2;
+	fcinfo.arg[0] = NumericGetDatum(a);
+	fcinfo.arg[1] = NumericGetDatum(b);
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
 
-    /* return the result */
-    return DatumGetNumeric(numeric_div(&fcinfo));
+	/* return the result */
+	return DatumGetNumeric(numeric_div(&fcinfo));
 
 }
 
 static Numeric mul_numeric(Numeric a, Numeric b) {
 
-    FunctionCallInfoData fcinfo;
+	FunctionCallInfoData fcinfo;
 
-    /* set params */
-    fcinfo.nargs = 2;
-    fcinfo.arg[0] = NumericGetDatum(a);
-    fcinfo.arg[1] = NumericGetDatum(b);
-    fcinfo.argnull[0] = false;
-    fcinfo.argnull[1] = false;
+	/* set params */
+	fcinfo.nargs = 2;
+	fcinfo.arg[0] = NumericGetDatum(a);
+	fcinfo.arg[1] = NumericGetDatum(b);
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
 
-    /* return the result */
-    return DatumGetNumeric(numeric_mul(&fcinfo));
+	/* return the result */
+	return DatumGetNumeric(numeric_mul(&fcinfo));
 
 }
 
 static Numeric sub_numeric(Numeric a, Numeric b) {
 
-    FunctionCallInfoData fcinfo;
+	FunctionCallInfoData fcinfo;
 
-    /* set params */
-    fcinfo.nargs = 2;
-    fcinfo.arg[0] = NumericGetDatum(a);
-    fcinfo.arg[1] = NumericGetDatum(b);
-    fcinfo.argnull[0] = false;
-    fcinfo.argnull[1] = false;
+	/* set params */
+	fcinfo.nargs = 2;
+	fcinfo.arg[0] = NumericGetDatum(a);
+	fcinfo.arg[1] = NumericGetDatum(b);
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
 
-    /* return the result */
-    return DatumGetNumeric(numeric_sub(&fcinfo));
+	/* return the result */
+	return DatumGetNumeric(numeric_sub(&fcinfo));
 
 }
 
 static Numeric pow_numeric(Numeric a, int b) {
 
-    FunctionCallInfoData fcinfo;
+	FunctionCallInfoData fcinfo;
 
-    /* set params */
-    fcinfo.nargs = 2;
-    fcinfo.arg[0] = NumericGetDatum(a);
-    fcinfo.arg[1] = NumericGetDatum(create_numeric(b));
-    fcinfo.argnull[0] = false;
-    fcinfo.argnull[1] = false;
+	/* set params */
+	fcinfo.nargs = 2;
+	fcinfo.arg[0] = NumericGetDatum(a);
+	fcinfo.arg[1] = NumericGetDatum(create_numeric(b));
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
 
-    /* return the result */
-    return DatumGetNumeric(numeric_power(&fcinfo));
+	/* return the result */
+	return DatumGetNumeric(numeric_power(&fcinfo));
 
 }
 
 static Numeric sqrt_numeric(Numeric a) {
 
-    FunctionCallInfoData fcinfo;
+	FunctionCallInfoData fcinfo;
 
-    /* set params */
-    fcinfo.nargs = 1;
-    fcinfo.arg[0] = NumericGetDatum(a);
-    fcinfo.argnull[0] = false;
+	/* set params */
+	fcinfo.nargs = 1;
+	fcinfo.arg[0] = NumericGetDatum(a);
+	fcinfo.argnull[0] = false;
 
-    /* return the result */
-    return DatumGetNumeric(numeric_sqrt(&fcinfo));
+	/* return the result */
+	return DatumGetNumeric(numeric_sqrt(&fcinfo));
 
 }
 
@@ -2470,40 +2470,40 @@ static Numeric sqrt_numeric(Numeric a) {
 static Datum
 double_to_array(FunctionCallInfo fcinfo, double * d, int len) {
 
-    ArrayBuildState *astate = NULL;
-    int         i;
+	ArrayBuildState *astate = NULL;
+	int		 i;
 
-    for (i = 0; i < len; i++) {
+	for (i = 0; i < len; i++) {
 
-        /* stash away this field */
-        astate = accumArrayResult(astate,
-                                  Float8GetDatum(d[i]),
-                                  false,
-                                  FLOAT8OID,
-                                  CurrentMemoryContext);
-    }
+		/* stash away this field */
+		astate = accumArrayResult(astate,
+								  Float8GetDatum(d[i]),
+								  false,
+								  FLOAT8OID,
+								  CurrentMemoryContext);
+	}
 
-    PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate,
-                                          CurrentMemoryContext));
+	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate,
+										  CurrentMemoryContext));
 }
 
 static Datum
 numeric_to_array(FunctionCallInfo fcinfo, Numeric * d, int len) {
 
-    ArrayBuildState *astate = NULL;
-    int         i;
+	ArrayBuildState *astate = NULL;
+	int		 i;
 
-    for (i = 0; i < len; i++) {
+	for (i = 0; i < len; i++) {
 
-        /* stash away this field */
-        astate = accumArrayResult(astate,
-                                  NumericGetDatum(d[i]),
-                                  false,
-                                  NUMERICOID,
-                                  CurrentMemoryContext);
+		/* stash away this field */
+		astate = accumArrayResult(astate,
+								  NumericGetDatum(d[i]),
+								  false,
+								  NUMERICOID,
+								  CurrentMemoryContext);
 
-    }
+	}
 
-    PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate,
-                                          CurrentMemoryContext));
+	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate,
+										  CurrentMemoryContext));
 }
