@@ -85,53 +85,49 @@ PG_MODULE_MAGIC;
 /* Structures used to keep the data - the 'elements' array is extended
  * on the fly if needed. */
 
-typedef struct struct_double {
+typedef struct state_double
+{
+	int		maxelements;	/* size of elements array */
+	int		nelements;		/* number of used items */
 
-	int		maxelements;
-	int		nelements;
+	double	cut_lower;		/* fraction to cut at the lower end */
+	double	cut_upper;		/* fraction to cut at the upper end */
 
-	double	cut_lower;
-	double	cut_upper;
+	double *elements;		/* array of values */
+} state_double;
 
-	double *elements;
+typedef struct state_int32
+{
+	int		maxelements;	/* size of elements array */
+	int		nelements;		/* number of used items */
 
-} struct_double;
+	double	cut_lower;		/* fraction to cut at the lower end */
+	double	cut_upper;		/* fraction to cut at the upper end */
 
-typedef struct struct_int32 {
+	int32  *elements;		/* array of values */
+} state_int32;
 
-	int		maxelements;
-	int		nelements;
+typedef struct state_int64
+{
+	int		maxelements;	/* size of elements array */
+	int		nelements;		/* number of used items */
 
-	double	cut_lower;
-	double	cut_upper;
+	double	cut_lower;		/* fraction to cut at the lower end */
+	double	cut_upper;		/* fraction to cut at the upper end */
 
-	int32  *elements;
+	int64  *elements;		/* array of values */
+} state_int64;
 
-} struct_int32;
+typedef struct state_numeric
+{
+	int		maxelements;	/* size of elements array */
+	int		nelements;		/* number of used items */
 
-typedef struct struct_int64 {
+	double	cut_lower;		/* fraction to cut at the lower end */
+	double	cut_upper;		/* fraction to cut at the upper end */
 
-	int		maxelements;
-	int		nelements;
-
-	double	cut_lower;
-	double	cut_upper;
-
-	int64  *elements;
-
-} struct_int64;
-
-typedef struct struct_numeric {
-
-	int		maxelements;
-	int		nelements;
-
-	double	cut_lower;
-	double	cut_upper;
-
-	Numeric *elements;
-
-} struct_numeric;
+	Numeric *elements;		/* array of values */
+} state_numeric;
 
 /* comparators, used for qsort */
 
@@ -311,7 +307,7 @@ Datum
 trimmed_append_double(PG_FUNCTION_ARGS)
 {
 
-	struct_double * data;
+	state_double * data;
 
 	double element;
 
@@ -324,7 +320,7 @@ trimmed_append_double(PG_FUNCTION_ARGS)
 
 	if (PG_ARGISNULL(0)) {
 
-		data = (struct_double*)palloc(sizeof(struct_double));
+		data = (state_double*)palloc(sizeof(state_double));
 		data->elements  = (double*)palloc(SLICE_SIZE*sizeof(double));
 		data->maxelements = SLICE_SIZE;
 		data->nelements = 0;
@@ -334,7 +330,7 @@ trimmed_append_double(PG_FUNCTION_ARGS)
 		data->cut_upper = PG_GETARG_FLOAT8(3);
 
 	} else {
-		data = (struct_double*)PG_GETARG_POINTER(0);
+		data = (state_double*)PG_GETARG_POINTER(0);
 	}
 
 	if (! PG_ARGISNULL(1)) {
@@ -359,7 +355,7 @@ Datum
 trimmed_append_int32(PG_FUNCTION_ARGS)
 {
 
-	struct_int32 * data;
+	state_int32 * data;
 
 	int32 element;
 
@@ -372,7 +368,7 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
 
 	if (PG_ARGISNULL(0)) {
 
-		data = (struct_int32*)palloc(sizeof(struct_int32));
+		data = (state_int32*)palloc(sizeof(state_int32));
 		data->elements  = (int32*)palloc(SLICE_SIZE*sizeof(int32));
 		data->maxelements = SLICE_SIZE;
 		data->nelements = 0;
@@ -382,7 +378,7 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
 		data->cut_upper = PG_GETARG_FLOAT8(3);
 
 	} else {
-		data = (struct_int32*)PG_GETARG_POINTER(0);
+		data = (state_int32*)PG_GETARG_POINTER(0);
 	}
 
 	if (! PG_ARGISNULL(1)) {
@@ -408,7 +404,7 @@ Datum
 trimmed_append_int64(PG_FUNCTION_ARGS)
 {
 
-	struct_int64 * data;
+	state_int64 * data;
 
 	int64 element;
 
@@ -421,7 +417,7 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
 
 	if (PG_ARGISNULL(0)) {
 
-		data = (struct_int64*)palloc(sizeof(struct_int64));
+		data = (state_int64*)palloc(sizeof(state_int64));
 		data->elements  = (int64*)palloc(SLICE_SIZE*sizeof(int64));
 		data->maxelements = SLICE_SIZE;
 		data->nelements = 0;
@@ -431,7 +427,7 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
 		data->cut_upper = PG_GETARG_FLOAT8(3);
 
 	} else {
-		data = (struct_int64*)PG_GETARG_POINTER(0);
+		data = (state_int64*)PG_GETARG_POINTER(0);
 	}
 
 	if (! PG_ARGISNULL(1)) {
@@ -457,7 +453,7 @@ Datum
 trimmed_append_numeric(PG_FUNCTION_ARGS)
 {
 
-	struct_numeric * data;
+	state_numeric * data;
 
 	Numeric element;
 
@@ -470,7 +466,7 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 
 	if (PG_ARGISNULL(0)) {
 
-		data = (struct_numeric*)palloc(sizeof(struct_numeric));
+		data = (state_numeric*)palloc(sizeof(state_numeric));
 		data->elements  = (Numeric*)palloc(SLICE_SIZE*sizeof(Numeric));
 		data->maxelements = SLICE_SIZE;
 		data->nelements = 0;
@@ -480,7 +476,7 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 		data->cut_upper = PG_GETARG_FLOAT8(3);
 
 	} else {
-		data = (struct_numeric*)PG_GETARG_POINTER(0);
+		data = (state_numeric*)PG_GETARG_POINTER(0);
 	}
 
 	if (! PG_ARGISNULL(1)) {
@@ -505,8 +501,8 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 Datum
 trimmed_serial_double(PG_FUNCTION_ARGS)
 {
-	struct_double  *data = (struct_double *)PG_GETARG_POINTER(0);
-	Size			hlen = offsetof(struct_double, elements);	/* header */
+	state_double  *data = (state_double *)PG_GETARG_POINTER(0);
+	Size			hlen = offsetof(state_double, elements);	/* header */
 	Size			len = data->nelements * sizeof(double);			/* elements */
 	bytea		   *out = (bytea *)palloc(VARHDRSZ + len) + hlen;
 	char		   *ptr;
@@ -517,8 +513,8 @@ trimmed_serial_double(PG_FUNCTION_ARGS)
 
 	ptr = VARDATA(out);
 
-	memcpy(ptr, data, offsetof(struct_double, elements));
-	ptr += offsetof(struct_double, elements);
+	memcpy(ptr, data, offsetof(state_double, elements));
+	ptr += offsetof(state_double, elements);
 
 	memcpy(ptr, data->elements, len);
 
@@ -528,8 +524,8 @@ trimmed_serial_double(PG_FUNCTION_ARGS)
 Datum
 trimmed_serial_int32(PG_FUNCTION_ARGS)
 {
-	struct_int32   *data = (struct_int32 *)PG_GETARG_POINTER(0);
-	Size			hlen = offsetof(struct_int32, elements);	/* header */
+	state_int32   *data = (state_int32 *)PG_GETARG_POINTER(0);
+	Size			hlen = offsetof(state_int32, elements);	/* header */
 	Size			len = data->nelements * sizeof(int32);			/* elements */
 	bytea		   *out = (bytea *)palloc(VARHDRSZ + len + hlen);
 	char		   *ptr;
@@ -540,8 +536,8 @@ trimmed_serial_int32(PG_FUNCTION_ARGS)
 
 	ptr = VARDATA(out);
 
-	memcpy(ptr, data, offsetof(struct_int32, elements));
-	ptr += offsetof(struct_int32, elements);
+	memcpy(ptr, data, offsetof(state_int32, elements));
+	ptr += offsetof(state_int32, elements);
 
 	memcpy(ptr, data->elements, len);
 
@@ -551,8 +547,8 @@ trimmed_serial_int32(PG_FUNCTION_ARGS)
 Datum
 trimmed_serial_int64(PG_FUNCTION_ARGS)
 {
-	struct_int64  *data = (struct_int64 *)PG_GETARG_POINTER(0);
-	Size			hlen = offsetof(struct_int64, elements);	/* header */
+	state_int64  *data = (state_int64 *)PG_GETARG_POINTER(0);
+	Size			hlen = offsetof(state_int64, elements);	/* header */
 	Size			len = data->nelements * sizeof(int64);			/* elements */
 	bytea		   *out = (bytea *)palloc(VARHDRSZ + len + hlen);
 	char		   *ptr;
@@ -563,8 +559,8 @@ trimmed_serial_int64(PG_FUNCTION_ARGS)
 
 	ptr = VARDATA(out);
 
-	memcpy(ptr, data, offsetof(struct_int64, elements));
-	ptr += offsetof(struct_int64, elements);
+	memcpy(ptr, data, offsetof(state_int64, elements));
+	ptr += offsetof(state_int64, elements);
 
 	memcpy(ptr, data->elements, len);
 
@@ -575,9 +571,9 @@ Datum
 trimmed_serial_numeric(PG_FUNCTION_ARGS)
 {
 	int				i;
-	Size			hlen = offsetof(struct_numeric, elements);	/* header */
+	Size			hlen = offsetof(state_numeric, elements);	/* header */
 	Size			len;										/* elements */
-	struct_numeric *data = (struct_numeric *)PG_GETARG_POINTER(0);
+	state_numeric *data = (state_numeric *)PG_GETARG_POINTER(0);
 	bytea		   *out;
 	char		   *ptr;
 
@@ -593,8 +589,8 @@ trimmed_serial_numeric(PG_FUNCTION_ARGS)
 
 	ptr = (char*) VARDATA(out);
 
-	memcpy(ptr, data, offsetof(struct_numeric, elements));
-	ptr += offsetof(struct_numeric, elements);
+	memcpy(ptr, data, offsetof(state_numeric, elements));
+	ptr += offsetof(state_numeric, elements);
 
 	/* now copy the contents of each Numeric value into the buffer */
 	for (i = 0; i < data->nelements; i++)
@@ -612,7 +608,7 @@ trimmed_serial_numeric(PG_FUNCTION_ARGS)
 Datum
 trimmed_deserial_double(PG_FUNCTION_ARGS)
 {
-	struct_double *out = (struct_double *)palloc(sizeof(struct_double));
+	state_double *out = (state_double *)palloc(sizeof(state_double));
 	bytea  *data = (bytea *)PG_GETARG_POINTER(0);
 	Size	len = VARSIZE_ANY_EXHDR(data);
 	char   *ptr = VARDATA(data);
@@ -623,10 +619,10 @@ trimmed_deserial_double(PG_FUNCTION_ARGS)
 	Assert(len % sizeof(double) == 0);
 
 	/* copy the header */
-	memcpy(out, ptr, offsetof(struct_double, elements));
-	ptr += offsetof(struct_double, elements);
+	memcpy(out, ptr, offsetof(state_double, elements));
+	ptr += offsetof(state_double, elements);
 
-	Assert(len == offsetof(struct_double, elements) + out->nelements * sizeof(double));
+	Assert(len == offsetof(state_double, elements) + out->nelements * sizeof(double));
 
 	/* we only allocate the necessary space */
 	out->elements = (double *)palloc(out->nelements * sizeof(double));
@@ -640,7 +636,7 @@ trimmed_deserial_double(PG_FUNCTION_ARGS)
 Datum
 trimmed_deserial_int32(PG_FUNCTION_ARGS)
 {
-	struct_int32 *out = (struct_int32 *)palloc(sizeof(struct_int32));
+	state_int32 *out = (state_int32 *)palloc(sizeof(state_int32));
 	bytea  *data = (bytea *)PG_GETARG_POINTER(0);
 	Size	len = VARSIZE_ANY_EXHDR(data);
 	char   *ptr = VARDATA(data);
@@ -651,10 +647,10 @@ trimmed_deserial_int32(PG_FUNCTION_ARGS)
 	Assert(len % sizeof(int32) == 0);
 
 	/* copy the header */
-	memcpy(out, ptr, offsetof(struct_int32, elements));
-	ptr += offsetof(struct_int32, elements);
+	memcpy(out, ptr, offsetof(state_int32, elements));
+	ptr += offsetof(state_int32, elements);
 
-	Assert(len == offsetof(struct_int32, elements) + out->nelements * sizeof(int32));
+	Assert(len == offsetof(state_int32, elements) + out->nelements * sizeof(int32));
 
 	/* we only allocate the necessary space */
 	out->elements = (int32 *)palloc(out->nelements * sizeof(int32));
@@ -668,7 +664,7 @@ trimmed_deserial_int32(PG_FUNCTION_ARGS)
 Datum
 trimmed_deserial_int64(PG_FUNCTION_ARGS)
 {
-	struct_int64 *out = (struct_int64 *)palloc(sizeof(struct_int64));
+	state_int64 *out = (state_int64 *)palloc(sizeof(state_int64));
 	bytea  *data = (bytea *)PG_GETARG_POINTER(0);
 	Size	len = VARSIZE_ANY_EXHDR(data);
 	char   *ptr = VARDATA(data);
@@ -679,10 +675,10 @@ trimmed_deserial_int64(PG_FUNCTION_ARGS)
 	Assert(len % sizeof(int64) == 0);
 
 	/* copy the header */
-	memcpy(out, ptr, offsetof(struct_int64, elements));
-	ptr += offsetof(struct_int64, elements);
+	memcpy(out, ptr, offsetof(state_int64, elements));
+	ptr += offsetof(state_int64, elements);
 
-	Assert(len == offsetof(struct_int64, elements) + out->nelements * sizeof(int64));
+	Assert(len == offsetof(state_int64, elements) + out->nelements * sizeof(int64));
 
 	/* we only allocate the necessary space */
 	out->elements = (int64 *)palloc(out->nelements * sizeof(int64));
@@ -697,7 +693,7 @@ Datum
 trimmed_deserial_numeric(PG_FUNCTION_ARGS)
 {
 	int		i;
-	struct_numeric *out = (struct_numeric *)palloc(sizeof(struct_numeric));
+	state_numeric *out = (state_numeric *)palloc(sizeof(state_numeric));
 	bytea  *data = (bytea *)PG_GETARG_POINTER(0);
 	Size	len = VARSIZE_ANY_EXHDR(data);
 	char   *ptr = VARDATA(data);
@@ -708,8 +704,8 @@ trimmed_deserial_numeric(PG_FUNCTION_ARGS)
 	Assert(len > 0);
 
 	/* first read the struct header, stored at the beginning */
-	memcpy(out, ptr, offsetof(struct_numeric, elements));
-	ptr += offsetof(struct_numeric, elements);
+	memcpy(out, ptr, offsetof(state_numeric, elements));
+	ptr += offsetof(state_numeric, elements);
 
 	/* allocate an array with enough space for the Numeric pointers */
 	out->maxelements = out->nelements; /* no slack space for new data */
@@ -738,15 +734,15 @@ trimmed_deserial_numeric(PG_FUNCTION_ARGS)
 Datum
 trimmed_combine_double(PG_FUNCTION_ARGS)
 {
-	struct_double *data1;
-	struct_double *data2;
+	state_double *data1;
+	state_double *data2;
 	MemoryContext agg_context;
 	MemoryContext old_context;
 
 	GET_AGG_CONTEXT("trimmed_combine_double", fcinfo, agg_context);
 
-	data1 = PG_ARGISNULL(0) ? NULL : (struct_double *) PG_GETARG_POINTER(0);
-	data2 = PG_ARGISNULL(1) ? NULL : (struct_double *) PG_GETARG_POINTER(1);
+	data1 = PG_ARGISNULL(0) ? NULL : (state_double *) PG_GETARG_POINTER(0);
+	data2 = PG_ARGISNULL(1) ? NULL : (state_double *) PG_GETARG_POINTER(1);
 
 	if (data2 == NULL)
 		PG_RETURN_POINTER(data1);
@@ -755,7 +751,7 @@ trimmed_combine_double(PG_FUNCTION_ARGS)
 	{
 		old_context = MemoryContextSwitchTo(agg_context);
 
-		data1 = (struct_double *)palloc0(sizeof(struct_double));
+		data1 = (state_double *)palloc0(sizeof(state_double));
 		data1->maxelements = data2->maxelements;
 		data1->nelements = data2->nelements;
 
@@ -795,15 +791,15 @@ trimmed_combine_double(PG_FUNCTION_ARGS)
 Datum
 trimmed_combine_int32(PG_FUNCTION_ARGS)
 {
-	struct_int32 *data1;
-	struct_int32 *data2;
+	state_int32 *data1;
+	state_int32 *data2;
 	MemoryContext agg_context;
 	MemoryContext old_context;
 
 	GET_AGG_CONTEXT("trimmed_combine_int32", fcinfo, agg_context);
 
-	data1 = PG_ARGISNULL(0) ? NULL : (struct_int32 *) PG_GETARG_POINTER(0);
-	data2 = PG_ARGISNULL(1) ? NULL : (struct_int32 *) PG_GETARG_POINTER(1);
+	data1 = PG_ARGISNULL(0) ? NULL : (state_int32 *) PG_GETARG_POINTER(0);
+	data2 = PG_ARGISNULL(1) ? NULL : (state_int32 *) PG_GETARG_POINTER(1);
 
 	if (data2 == NULL)
 		PG_RETURN_POINTER(data1);
@@ -812,7 +808,7 @@ trimmed_combine_int32(PG_FUNCTION_ARGS)
 	{
 		old_context = MemoryContextSwitchTo(agg_context);
 
-		data1 = (struct_int32 *)palloc0(sizeof(struct_int32));
+		data1 = (state_int32 *)palloc0(sizeof(state_int32));
 		data1->maxelements = data2->maxelements;
 		data1->nelements = data2->nelements;
 
@@ -852,15 +848,15 @@ trimmed_combine_int32(PG_FUNCTION_ARGS)
 Datum
 trimmed_combine_int64(PG_FUNCTION_ARGS)
 {
-	struct_int64 *data1;
-	struct_int64 *data2;
+	state_int64 *data1;
+	state_int64 *data2;
 	MemoryContext agg_context;
 	MemoryContext old_context;
 
 	GET_AGG_CONTEXT("trimmed_combine_int64", fcinfo, agg_context);
 
-	data1 = PG_ARGISNULL(0) ? NULL : (struct_int64 *) PG_GETARG_POINTER(0);
-	data2 = PG_ARGISNULL(1) ? NULL : (struct_int64 *) PG_GETARG_POINTER(1);
+	data1 = PG_ARGISNULL(0) ? NULL : (state_int64 *) PG_GETARG_POINTER(0);
+	data2 = PG_ARGISNULL(1) ? NULL : (state_int64 *) PG_GETARG_POINTER(1);
 
 	if (data2 == NULL)
 		PG_RETURN_POINTER(data1);
@@ -869,7 +865,7 @@ trimmed_combine_int64(PG_FUNCTION_ARGS)
 	{
 		old_context = MemoryContextSwitchTo(agg_context);
 
-		data1 = (struct_int64 *)palloc0(sizeof(struct_int64));
+		data1 = (state_int64 *)palloc0(sizeof(state_int64));
 		data1->maxelements = data2->maxelements;
 		data1->nelements = data2->nelements;
 
@@ -909,16 +905,16 @@ trimmed_combine_numeric(PG_FUNCTION_ARGS)
 {
 	Size			len;
 	int				i;
-	struct_numeric *data1;
-	struct_numeric *data2;
+	state_numeric *data1;
+	state_numeric *data2;
 	MemoryContext agg_context;
 	MemoryContext old_context;
 	char		   *tmp;
 
 	GET_AGG_CONTEXT("trimmed_combine_numeric", fcinfo, agg_context);
 
-	data1 = PG_ARGISNULL(0) ? NULL : (struct_numeric *) PG_GETARG_POINTER(0);
-	data2 = PG_ARGISNULL(1) ? NULL : (struct_numeric *) PG_GETARG_POINTER(1);
+	data1 = PG_ARGISNULL(0) ? NULL : (state_numeric *) PG_GETARG_POINTER(0);
+	data2 = PG_ARGISNULL(1) ? NULL : (state_numeric *) PG_GETARG_POINTER(1);
 
 	if (data2 == NULL)
 		PG_RETURN_POINTER(data1);
@@ -927,7 +923,7 @@ trimmed_combine_numeric(PG_FUNCTION_ARGS)
 	{
 		old_context = MemoryContextSwitchTo(agg_context);
 
-		data1 = (struct_numeric *)palloc0(sizeof(struct_numeric));
+		data1 = (state_numeric *)palloc0(sizeof(state_numeric));
 		data1->maxelements = data2->maxelements;
 		data1->nelements = 0;
 
@@ -996,7 +992,7 @@ trimmed_avg_double(PG_FUNCTION_ARGS)
 	double  result = 0;
 	int	 from, to, cnt;
 
-	struct_double * data;
+	state_double * data;
 
 	CHECK_AGG_CONTEXT("trimmed_avg_double", fcinfo);
 
@@ -1004,7 +1000,7 @@ trimmed_avg_double(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (state_double*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1036,7 +1032,7 @@ trimmed_double_array(PG_FUNCTION_ARGS)
 	double  sum_x = 0, sum_x2 = 0;
 	int	 from, to, cnt;
 
-	struct_double * data;
+	state_double * data;
 
 	CHECK_AGG_CONTEXT("trimmed_double_array", fcinfo);
 
@@ -1044,7 +1040,7 @@ trimmed_double_array(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (state_double*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1091,7 +1087,7 @@ trimmed_avg_int32(PG_FUNCTION_ARGS)
 	double  result = 0;
 	int	 from, to, cnt;
 
-	struct_int32 * data;
+	state_int32 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_avg_int32", fcinfo);
 
@@ -1099,7 +1095,7 @@ trimmed_avg_int32(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (state_int32*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1130,7 +1126,7 @@ trimmed_int32_array(PG_FUNCTION_ARGS)
 	double  sum_x = 0, sum_x2 = 0;
 	int	 from, to, cnt;
 
-	struct_int32 * data;
+	state_int32 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_int32_array", fcinfo);
 
@@ -1138,7 +1134,7 @@ trimmed_int32_array(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (state_int32*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1185,7 +1181,7 @@ trimmed_avg_int64(PG_FUNCTION_ARGS)
 	double  result = 0;
 	int	 from, to, cnt;
 
-	struct_int64 * data;
+	state_int64 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_avg_int64", fcinfo);
 
@@ -1193,7 +1189,7 @@ trimmed_avg_int64(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (state_int64*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1224,7 +1220,7 @@ trimmed_int64_array(PG_FUNCTION_ARGS)
 	double  sum_x = 0, sum_x2 = 0;
 	int	 from, to, cnt;
 
-	struct_int64 * data;
+	state_int64 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_int64_array", fcinfo);
 
@@ -1232,7 +1228,7 @@ trimmed_int64_array(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (state_int64*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1279,7 +1275,7 @@ trimmed_avg_numeric(PG_FUNCTION_ARGS)
 	Numeric result, cnt;
 	int	 from, to;
 
-	struct_numeric * data;
+	state_numeric * data;
 
 	CHECK_AGG_CONTEXT("trimmed_avg_numeric", fcinfo);
 
@@ -1287,7 +1283,7 @@ trimmed_avg_numeric(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (state_numeric*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1322,7 +1318,7 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 	Numeric cntNumeric, cntNumeric_1;
 	int	 from, to;
 
-	struct_numeric * data;
+	state_numeric * data;
 
 	CHECK_AGG_CONTEXT("trimmed_numeric_array", fcinfo);
 
@@ -1330,7 +1326,7 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (state_numeric*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1387,7 +1383,7 @@ trimmed_var_double(PG_FUNCTION_ARGS)
 	double  avg = 0;
 	int	 from, to, cnt;
 
-	struct_double * data;
+	state_double * data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_double", fcinfo);
 
@@ -1395,7 +1391,7 @@ trimmed_var_double(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (state_double*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1428,7 +1424,7 @@ trimmed_var_int32(PG_FUNCTION_ARGS)
 	double  avg = 0;
 	int	 from, to, cnt;
 
-	struct_int32 * data;
+	state_int32 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_int32", fcinfo);
 
@@ -1436,7 +1432,7 @@ trimmed_var_int32(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (state_int32*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1469,7 +1465,7 @@ trimmed_var_int64(PG_FUNCTION_ARGS)
 	double  avg = 0;
 	int	 from, to, cnt;
 
-	struct_int64 * data;
+	state_int64 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_int64", fcinfo);
 
@@ -1477,7 +1473,7 @@ trimmed_var_int64(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (state_int64*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1509,7 +1505,7 @@ trimmed_var_numeric(PG_FUNCTION_ARGS)
 	Numeric result, avg, cnt;
 	int	 from, to;
 
-	struct_numeric * data;
+	state_numeric * data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_numeric", fcinfo);
 
@@ -1517,7 +1513,7 @@ trimmed_var_numeric(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (state_numeric*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1552,7 +1548,7 @@ trimmed_var_pop_double(PG_FUNCTION_ARGS)
 	double  sum_x = 0, sum_x2 = 0;
 	int	 from, to, cnt;
 
-	struct_double * data;
+	state_double * data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_pop_double", fcinfo);
 
@@ -1560,7 +1556,7 @@ trimmed_var_pop_double(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (state_double*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1589,7 +1585,7 @@ trimmed_var_pop_int32(PG_FUNCTION_ARGS)
 	double  sum_x = 0, sum_x2 = 0;
 	int	 from, to, cnt;
 
-	struct_int32 * data;
+	state_int32 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_pop_int32", fcinfo);
 
@@ -1597,7 +1593,7 @@ trimmed_var_pop_int32(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (state_int32*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1626,7 +1622,7 @@ trimmed_var_pop_int64(PG_FUNCTION_ARGS)
 	double  sum_x = 0, sum_x2 = 0;
 	int	 from, to, cnt;
 
-	struct_int64 * data;
+	state_int64 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_pop_int64", fcinfo);
 
@@ -1634,7 +1630,7 @@ trimmed_var_pop_int64(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (state_int64*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1663,7 +1659,7 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 	Numeric sum_x, sum_x2, cnt;
 	int	 from, to;
 
-	struct_numeric * data;
+	state_numeric * data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_pop_numeric", fcinfo);
 
@@ -1671,7 +1667,7 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (state_numeric*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1704,7 +1700,7 @@ trimmed_var_samp_double(PG_FUNCTION_ARGS)
 	double  sum_x = 0, sum_x2 = 0;
 	int	 from, to, cnt;
 
-	struct_double * data;
+	state_double * data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_samp_double", fcinfo);
 
@@ -1712,7 +1708,7 @@ trimmed_var_samp_double(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (state_double*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1741,7 +1737,7 @@ trimmed_var_samp_int32(PG_FUNCTION_ARGS)
 	double  sum_x = 0, sum_x2 = 0;
 	int	 from, to, cnt;
 
-	struct_int32 * data;
+	state_int32 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_samp_int32", fcinfo);
 
@@ -1749,7 +1745,7 @@ trimmed_var_samp_int32(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (state_int32*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1778,7 +1774,7 @@ trimmed_var_samp_int64(PG_FUNCTION_ARGS)
 	double  sum_x = 0, sum_x2 = 0;
 	int	 from, to, cnt;
 
-	struct_int64 * data;
+	state_int64 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_samp_int64", fcinfo);
 
@@ -1786,7 +1782,7 @@ trimmed_var_samp_int64(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (state_int64*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1815,7 +1811,7 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 	Numeric sum_x, sum_x2, cnt;
 	int	 from, to;
 
-	struct_numeric * data;
+	state_numeric * data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_samp_numeric", fcinfo);
 
@@ -1823,7 +1819,7 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (state_numeric*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1857,7 +1853,7 @@ trimmed_stddev_double(PG_FUNCTION_ARGS)
 	double  avg = 0;
 	int	 from, to, cnt;
 
-	struct_double * data;
+	state_double * data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_double", fcinfo);
 
@@ -1865,7 +1861,7 @@ trimmed_stddev_double(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (state_double*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1898,7 +1894,7 @@ trimmed_stddev_int32(PG_FUNCTION_ARGS)
 	double  avg = 0;
 	int	 from, to, cnt;
 
-	struct_int32 * data;
+	state_int32 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_int32", fcinfo);
 
@@ -1906,7 +1902,7 @@ trimmed_stddev_int32(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (state_int32*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1939,7 +1935,7 @@ trimmed_stddev_int64(PG_FUNCTION_ARGS)
 	double  avg = 0;
 	int	 from, to, cnt;
 
-	struct_int64 * data;
+	state_int64 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_int64", fcinfo);
 
@@ -1947,7 +1943,7 @@ trimmed_stddev_int64(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (state_int64*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -1979,7 +1975,7 @@ trimmed_stddev_numeric(PG_FUNCTION_ARGS)
 	Numeric result, avg, cnt;
 	int	 from, to;
 
-	struct_numeric * data;
+	state_numeric * data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_numeric", fcinfo);
 
@@ -1987,7 +1983,7 @@ trimmed_stddev_numeric(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (state_numeric*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -2022,7 +2018,7 @@ trimmed_stddev_pop_double(PG_FUNCTION_ARGS)
 	double  sum_x = 0, sum_x2 = 0;
 	int	 from, to, cnt;
 
-	struct_double * data;
+	state_double * data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_pop_double", fcinfo);
 
@@ -2030,7 +2026,7 @@ trimmed_stddev_pop_double(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (state_double*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -2059,7 +2055,7 @@ trimmed_stddev_pop_int32(PG_FUNCTION_ARGS)
 	double  sum_x = 0, sum_x2 = 0;
 	int	 from, to, cnt;
 
-	struct_int32 * data;
+	state_int32 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_pop_int32", fcinfo);
 
@@ -2067,7 +2063,7 @@ trimmed_stddev_pop_int32(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (state_int32*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -2096,7 +2092,7 @@ trimmed_stddev_pop_int64(PG_FUNCTION_ARGS)
 	double  sum_x = 0, sum_x2 = 0;
 	int	 from, to, cnt;
 
-	struct_int64 * data;
+	state_int64 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_pop_int64", fcinfo);
 
@@ -2104,7 +2100,7 @@ trimmed_stddev_pop_int64(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (state_int64*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -2133,7 +2129,7 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 	Numeric sum_x, sum_x2, cnt;
 	int	 from, to;
 
-	struct_numeric * data;
+	state_numeric * data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_pop_numeric", fcinfo);
 
@@ -2141,7 +2137,7 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (state_numeric*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -2175,7 +2171,7 @@ trimmed_stddev_samp_double(PG_FUNCTION_ARGS)
 	double  sum_x = 0, sum_x2 = 0;
 	int	 from, to, cnt;
 
-	struct_double * data;
+	state_double * data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_samp_double", fcinfo);
 
@@ -2183,7 +2179,7 @@ trimmed_stddev_samp_double(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_double*)PG_GETARG_POINTER(0);
+	data = (state_double*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -2212,7 +2208,7 @@ trimmed_stddev_samp_int32(PG_FUNCTION_ARGS)
 	double  sum_x = 0, sum_x2 = 0;
 	int	 from, to, cnt;
 
-	struct_int32 * data;
+	state_int32 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_samp_int32", fcinfo);
 
@@ -2220,7 +2216,7 @@ trimmed_stddev_samp_int32(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int32*)PG_GETARG_POINTER(0);
+	data = (state_int32*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -2249,7 +2245,7 @@ trimmed_stddev_samp_int64(PG_FUNCTION_ARGS)
 	double  sum_x = 0, sum_x2 = 0;
 	int	 from, to, cnt;
 
-	struct_int64 * data;
+	state_int64 * data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_samp_int64", fcinfo);
 
@@ -2257,7 +2253,7 @@ trimmed_stddev_samp_int64(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_int64*)PG_GETARG_POINTER(0);
+	data = (state_int64*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
@@ -2286,7 +2282,7 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 	Numeric sum_x, sum_x2, cnt;
 	int	 from, to;
 
-	struct_numeric * data;
+	state_numeric * data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_samp_numeric", fcinfo);
 
@@ -2294,7 +2290,7 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	data = (struct_numeric*)PG_GETARG_POINTER(0);
+	data = (state_numeric*)PG_GETARG_POINTER(0);
 
 	from = floor(data->nelements * data->cut_lower);
 	to   = data->nelements - floor(data->nelements * data->cut_upper);
