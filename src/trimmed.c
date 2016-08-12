@@ -1005,9 +1005,9 @@ trimmed_avg_double(PG_FUNCTION_ARGS)
 	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
-		result = result + data->elements[i]/cnt;
+		result = result + data->elements[i];
 
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(result/cnt);
 }
 
 Datum
@@ -1044,19 +1044,21 @@ trimmed_double_array(PG_FUNCTION_ARGS)
 
 	for (i = from; i < to; i++)
 	{
-		result[0] += data->elements[i]/cnt;
+		result[0] += data->elements[i];
 		sum_x = sum_x + data->elements[i];
 		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
 	}
 
+	result[0] /= cnt;
 	result[1] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt);	   /* var_pop */
 	result[2] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)); /* var_samp */
 
 	/* variance */
 	result[3] = 0;
 	for (i = from; i < to; i++)
-		result[3] += (data->elements[i] - result[0])*(data->elements[i] - result[0])/cnt;
+		result[3] += (data->elements[i] - result[0]) * (data->elements[i] - result[0]);
 
+	result[3] /= cnt;
 	result[4] = sqrt(result[1]); /* stddev_pop */
 	result[5] = sqrt(result[2]); /* stddev_samp */
 	result[6] = sqrt(result[3]); /* stddev */
@@ -1089,9 +1091,9 @@ trimmed_avg_int32(PG_FUNCTION_ARGS)
 	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
-		result = result + ((double)data->elements[i])/cnt;
+		result = result + (double)data->elements[i];
 
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(result/cnt);
 }
 
 Datum
@@ -1128,19 +1130,21 @@ trimmed_int32_array(PG_FUNCTION_ARGS)
 
 	for (i = from; i < to; i++)
 	{
-		result[0] += (double)data->elements[i]/cnt;
+		result[0] += (double)data->elements[i];
 		sum_x = sum_x + data->elements[i];
 		sum_x2 = sum_x2 + ((double)data->elements[i])*((double)data->elements[i]);
 	}
 
+	result[0] /= cnt;
 	result[1] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt);	   /* var_pop */
 	result[2] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)); /* var_samp */
 
 	/* variance */
 	result[3] = 0;
 	for (i = from; i < to; i++)
-		result[3] += ((double)data->elements[i] - result[0])*((double)data->elements[i] - result[0])/cnt;
+		result[3] += ((double)data->elements[i] - result[0])*((double)data->elements[i] - result[0]);
 
+	result[3] /= cnt;
 	result[4] = sqrt(result[1]); /* stddev_pop */
 	result[5] = sqrt(result[2]); /* stddev_samp */
 	result[6] = sqrt(result[3]); /* stddev */
@@ -1173,9 +1177,9 @@ trimmed_avg_int64(PG_FUNCTION_ARGS)
 	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
-		result = result + ((double)data->elements[i])/cnt;
+		result = result + (double)data->elements[i];
 
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(result/cnt);
 }
 
 Datum
@@ -1212,19 +1216,21 @@ trimmed_int64_array(PG_FUNCTION_ARGS)
 
 	for (i = from; i < to; i++)
 	{
-		result[0] += (double)data->elements[i]/cnt;
+		result[0] += (double)data->elements[i];
 		sum_x = sum_x + data->elements[i];
 		sum_x2 = sum_x2 + ((double)data->elements[i])*((double)data->elements[i]);
 	}
 
+	result[0] /= cnt;
 	result[1] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt);	   /* var_pop */
 	result[2] = (cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)); /* var_samp */
 
 	/* variance */
 	result[3] = 0;
 	for (i = from; i < to; i++)
-		result[3] += ((double)data->elements[i] - result[0])*((double)data->elements[i] - result[0])/cnt;
+		result[3] += ((double)data->elements[i] - result[0])*((double)data->elements[i] - result[0]);
 
+	result[3] /= cnt;
 	result[4] = sqrt(result[1]); /* stddev_pop */
 	result[5] = sqrt(result[2]); /* stddev_samp */
 	result[6] = sqrt(result[3]); /* stddev */
@@ -1373,12 +1379,13 @@ trimmed_var_double(PG_FUNCTION_ARGS)
 	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
-		avg = avg + data->elements[i]/cnt;
+		avg = avg + data->elements[i];
+	avg /= cnt;
 
 	for (i = from; i < to; i++)
-		result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
+		result = result + (data->elements[i] - avg)*(data->elements[i] - avg);
 
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(result/cnt);
 }
 
 Datum
@@ -1407,12 +1414,13 @@ trimmed_var_int32(PG_FUNCTION_ARGS)
 	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
-		avg = avg + ((double)data->elements[i])/cnt;
+		avg = avg + (double)data->elements[i];
+	avg /= cnt;
 
 	for (i = from; i < to; i++)
-		result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
+		result = result + (data->elements[i] - avg)*(data->elements[i] - avg);
 
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(result/cnt);
 }
 
 Datum
@@ -1440,12 +1448,13 @@ trimmed_var_int64(PG_FUNCTION_ARGS)
 	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
-		avg = avg + ((double)data->elements[i])/cnt;
+		avg = avg + (double)data->elements[i];
+	avg /= cnt;
 
 	for (i = from; i < to; i++)
-		result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
+		result = result + (data->elements[i] - avg)*(data->elements[i] - avg);
 
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(result/cnt);
 }
 
 Datum
@@ -1798,12 +1807,13 @@ trimmed_stddev_double(PG_FUNCTION_ARGS)
 	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
-		avg = avg + data->elements[i]/cnt;
+		avg = avg + data->elements[i];
+	avg /= cnt;
 
 	for (i = from; i < to; i++)
-		result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
+		result = result + (data->elements[i] - avg)*(data->elements[i] - avg);
 
-	PG_RETURN_FLOAT8 (sqrt(result));
+	PG_RETURN_FLOAT8 (sqrt(result)/cnt);
 }
 
 Datum
@@ -1831,12 +1841,13 @@ trimmed_stddev_int32(PG_FUNCTION_ARGS)
 	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
-		avg = avg + ((double)data->elements[i])/cnt;
+		avg = avg + (double)data->elements[i];
+	avg /= cnt;
 
 	for (i = from; i < to; i++)
-		result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
+		result = result + (data->elements[i] - avg)*(data->elements[i] - avg);
 
-	PG_RETURN_FLOAT8 (sqrt(result));
+	PG_RETURN_FLOAT8 (sqrt(result)/cnt);
 }
 
 Datum
@@ -1864,12 +1875,13 @@ trimmed_stddev_int64(PG_FUNCTION_ARGS)
 	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
-		avg = avg + ((double)data->elements[i])/cnt;
+		avg = avg + (double)data->elements[i];
+	avg /= cnt;
 
 	for (i = from; i < to; i++)
-		result = result + (data->elements[i] - avg)*(data->elements[i] - avg)/cnt;
+		result = result + (data->elements[i] - avg)*(data->elements[i] - avg);
 
-	PG_RETURN_FLOAT8 (sqrt(result));
+	PG_RETURN_FLOAT8 (sqrt(result)/cnt);
 }
 
 Datum
