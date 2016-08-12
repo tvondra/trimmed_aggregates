@@ -307,7 +307,7 @@ static Numeric sqrt_numeric(Numeric a);
 Datum
 trimmed_append_double(PG_FUNCTION_ARGS)
 {
-	state_double * data;
+	state_double *data;
 	MemoryContext aggcontext;
 
 	GET_AGG_CONTEXT("trimmed_append_double", fcinfo, aggcontext);
@@ -351,7 +351,7 @@ trimmed_append_double(PG_FUNCTION_ARGS)
 Datum
 trimmed_append_int32(PG_FUNCTION_ARGS)
 {
-	state_int32 * data;
+	state_int32 *data;
 	MemoryContext aggcontext;
 
 	GET_AGG_CONTEXT("trimmed_append_int32", fcinfo, aggcontext);
@@ -395,7 +395,7 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
 Datum
 trimmed_append_int64(PG_FUNCTION_ARGS)
 {
-	state_int64 * data;
+	state_int64 *data;
 	MemoryContext aggcontext;
 
 	GET_AGG_CONTEXT("trimmed_append_int64", fcinfo, aggcontext);
@@ -439,7 +439,7 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
 Datum
 trimmed_append_numeric(PG_FUNCTION_ARGS)
 {
-	state_numeric * data;
+	state_numeric *data;
 	MemoryContext aggcontext;
 
 	GET_AGG_CONTEXT("trimmed_append_numeric", fcinfo, aggcontext);
@@ -973,7 +973,7 @@ trimmed_avg_double(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0;
 
-	state_double * data;
+	state_double *data;
 
 	CHECK_AGG_CONTEXT("trimmed_avg_double", fcinfo);
 
@@ -1006,7 +1006,7 @@ trimmed_double_array(PG_FUNCTION_ARGS)
 	/* average, var_pop, var_samp, variance, stddev_pop, stddev_samp, stddev */
 	double  result[7] = {0, 0, 0, 0, 0, 0, 0};
 
-	state_double * data;
+	state_double *data;
 
 	CHECK_AGG_CONTEXT("trimmed_double_array", fcinfo);
 
@@ -1057,7 +1057,7 @@ trimmed_avg_int32(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0;
 
-	state_int32 * data;
+	state_int32 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_avg_int32", fcinfo);
 
@@ -1090,7 +1090,7 @@ trimmed_int32_array(PG_FUNCTION_ARGS)
 	/* average, var_pop, var_samp, variance, stddev_pop, stddev_samp, stddev */
 	double	result[7] = {0, 0, 0, 0, 0, 0, 0};
 
-	state_int32 * data;
+	state_int32 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_int32_array", fcinfo);
 
@@ -1141,7 +1141,7 @@ trimmed_avg_int64(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0;
 
-	state_int64 * data;
+	state_int64 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_avg_int64", fcinfo);
 
@@ -1174,7 +1174,7 @@ trimmed_int64_array(PG_FUNCTION_ARGS)
 	/* average, var_pop, var_samp, variance, stddev_pop, stddev_samp, stddev */
 	double	result[7] = {0, 0, 0, 0, 0, 0, 0};
 
-	state_int64 * data;
+	state_int64 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_int64_array", fcinfo);
 
@@ -1225,7 +1225,7 @@ trimmed_avg_numeric(PG_FUNCTION_ARGS)
 	int		i, from, to;
 	Numeric	result, cnt;
 
-	state_numeric * data;
+	state_numeric *data;
 
 	CHECK_AGG_CONTEXT("trimmed_avg_numeric", fcinfo);
 
@@ -1262,7 +1262,7 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 	Numeric	sum_x, sum_x2;
 	Numeric	cntNumeric, cntNumeric_1;
 
-	state_numeric * data;
+	state_numeric *data;
 
 	CHECK_AGG_CONTEXT("trimmed_numeric_array", fcinfo);
 
@@ -1341,7 +1341,7 @@ trimmed_var_double(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0, avg = 0;
 
-	state_double * data;
+	state_double *data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_double", fcinfo);
 
@@ -1375,7 +1375,7 @@ trimmed_var_int32(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0, avg = 0;
 
-	state_int32 * data;
+	state_int32 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_int32", fcinfo);
 
@@ -1408,7 +1408,7 @@ trimmed_var_int64(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0, avg = 0;
 
-	state_int64 * data;
+	state_int64 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_int64", fcinfo);
 
@@ -1441,7 +1441,7 @@ trimmed_var_numeric(PG_FUNCTION_ARGS)
 	int		i, from, to;
 	Numeric	result, avg, cnt;
 
-	state_numeric * data;
+	state_numeric *data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_numeric", fcinfo);
 
@@ -1481,7 +1481,7 @@ trimmed_var_pop_double(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_double * data;
+	state_double *data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_pop_double", fcinfo);
 
@@ -1514,7 +1514,7 @@ trimmed_var_pop_int32(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_int32 * data;
+	state_int32 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_pop_int32", fcinfo);
 
@@ -1547,7 +1547,7 @@ trimmed_var_pop_int64(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double  sum_x = 0, sum_x2 = 0;
 
-	state_int64 * data;
+	state_int64 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_pop_int64", fcinfo);
 
@@ -1580,7 +1580,7 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 	int		i, from, to;
 	Numeric	sum_x, sum_x2, cnt;
 
-	state_numeric * data;
+	state_numeric *data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_pop_numeric", fcinfo);
 
@@ -1622,7 +1622,7 @@ trimmed_var_samp_double(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_double * data;
+	state_double *data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_samp_double", fcinfo);
 
@@ -1655,7 +1655,7 @@ trimmed_var_samp_int32(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_int32 * data;
+	state_int32 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_samp_int32", fcinfo);
 
@@ -1688,7 +1688,7 @@ trimmed_var_samp_int64(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_int64 * data;
+	state_int64 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_samp_int64", fcinfo);
 
@@ -1721,7 +1721,7 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 	int		i, from, to;
 	Numeric	sum_x, sum_x2, cnt;
 
-	state_numeric * data;
+	state_numeric *data;
 
 	CHECK_AGG_CONTEXT("trimmed_var_samp_numeric", fcinfo);
 
@@ -1766,7 +1766,7 @@ trimmed_stddev_double(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0, avg = 0;
 
-	state_double * data;
+	state_double *data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_double", fcinfo);
 
@@ -1799,7 +1799,7 @@ trimmed_stddev_int32(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0, avg = 0;
 
-	state_int32 * data;
+	state_int32 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_int32", fcinfo);
 
@@ -1832,7 +1832,7 @@ trimmed_stddev_int64(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0, avg = 0;
 
-	state_int64 * data;
+	state_int64 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_int64", fcinfo);
 
@@ -1865,7 +1865,7 @@ trimmed_stddev_numeric(PG_FUNCTION_ARGS)
 	int		i, from, to;
 	Numeric	result, avg, cnt;
 
-	state_numeric * data;
+	state_numeric *data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_numeric", fcinfo);
 
@@ -1905,7 +1905,7 @@ trimmed_stddev_pop_double(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_double * data;
+	state_double *data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_pop_double", fcinfo);
 
@@ -1938,7 +1938,7 @@ trimmed_stddev_pop_int32(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_int32 * data;
+	state_int32 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_pop_int32", fcinfo);
 
@@ -1971,7 +1971,7 @@ trimmed_stddev_pop_int64(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_int64 * data;
+	state_int64 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_pop_int64", fcinfo);
 
@@ -2004,7 +2004,7 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 	int		i, from, to;
 	Numeric	sum_x, sum_x2, cnt;
 
-	state_numeric * data;
+	state_numeric *data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_pop_numeric", fcinfo);
 
@@ -2047,7 +2047,7 @@ trimmed_stddev_samp_double(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_double * data;
+	state_double *data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_samp_double", fcinfo);
 
@@ -2080,7 +2080,7 @@ trimmed_stddev_samp_int32(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_int32 * data;
+	state_int32 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_samp_int32", fcinfo);
 
@@ -2113,7 +2113,7 @@ trimmed_stddev_samp_int64(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_int64 * data;
+	state_int64 *data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_samp_int64", fcinfo);
 
@@ -2146,7 +2146,7 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 	int		i, from, to;
 	Numeric	sum_x, sum_x2, cnt;
 
-	state_numeric * data;
+	state_numeric *data;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_samp_numeric", fcinfo);
 
