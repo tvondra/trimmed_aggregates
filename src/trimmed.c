@@ -158,6 +158,42 @@ Datum trimmed_append_int32(PG_FUNCTION_ARGS);
 Datum trimmed_append_int64(PG_FUNCTION_ARGS);
 Datum trimmed_append_numeric(PG_FUNCTION_ARGS);
 
+/* SERIALIZE STATE */
+
+PG_FUNCTION_INFO_V1(trimmed_serial_double);
+PG_FUNCTION_INFO_V1(trimmed_serial_int32);
+PG_FUNCTION_INFO_V1(trimmed_serial_int64);
+PG_FUNCTION_INFO_V1(trimmed_serial_numeric);
+
+Datum trimmed_serial_double(PG_FUNCTION_ARGS);
+Datum trimmed_serial_int32(PG_FUNCTION_ARGS);
+Datum trimmed_serial_int64(PG_FUNCTION_ARGS);
+Datum trimmed_serial_numeric(PG_FUNCTION_ARGS);
+
+/* DESERIALIZE STATE */
+
+PG_FUNCTION_INFO_V1(trimmed_deserial_double);
+PG_FUNCTION_INFO_V1(trimmed_deserial_int32);
+PG_FUNCTION_INFO_V1(trimmed_deserial_int64);
+PG_FUNCTION_INFO_V1(trimmed_deserial_numeric);
+
+Datum trimmed_deserial_double(PG_FUNCTION_ARGS);
+Datum trimmed_deserial_int32(PG_FUNCTION_ARGS);
+Datum trimmed_deserial_int64(PG_FUNCTION_ARGS);
+Datum trimmed_deserial_numeric(PG_FUNCTION_ARGS);
+
+/* COMBINE STATE */
+
+PG_FUNCTION_INFO_V1(trimmed_combine_double);
+PG_FUNCTION_INFO_V1(trimmed_combine_int32);
+PG_FUNCTION_INFO_V1(trimmed_combine_int64);
+PG_FUNCTION_INFO_V1(trimmed_combine_numeric);
+
+Datum trimmed_combine_double(PG_FUNCTION_ARGS);
+Datum trimmed_combine_int32(PG_FUNCTION_ARGS);
+Datum trimmed_combine_int64(PG_FUNCTION_ARGS);
+Datum trimmed_combine_numeric(PG_FUNCTION_ARGS);
+
 /* AVERAGE */
 
 PG_FUNCTION_INFO_V1(trimmed_avg_double);
@@ -464,6 +500,492 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 
     PG_RETURN_POINTER(data);
 
+}
+
+Datum
+trimmed_serial_double(PG_FUNCTION_ARGS)
+{
+	struct_double  *data = (struct_double *)PG_GETARG_POINTER(0);
+	Size			hlen = offsetof(struct_double, elements);	/* header */
+	Size			len = data->next * sizeof(double);			/* elements */
+	bytea		   *out = (bytea *)palloc(VARHDRSZ + len) + hlen;
+	char		   *ptr;
+
+	CHECK_AGG_CONTEXT("trimmed_serial_double", fcinfo);
+
+	SET_VARSIZE(out, VARHDRSZ + len + hlen);
+
+	ptr = VARDATA(out);
+
+	memcpy(ptr, data, offsetof(struct_double, elements));
+	ptr += offsetof(struct_double, elements);
+
+	memcpy(ptr, data->elements, len);
+
+	PG_RETURN_BYTEA_P(out);
+}
+
+Datum
+trimmed_serial_int32(PG_FUNCTION_ARGS)
+{
+	struct_int32   *data = (struct_int32 *)PG_GETARG_POINTER(0);
+	Size			hlen = offsetof(struct_int32, elements);	/* header */
+	Size			len = data->next * sizeof(int32);			/* elements */
+	bytea		   *out = (bytea *)palloc(VARHDRSZ + len + hlen);
+	char		   *ptr;
+
+	CHECK_AGG_CONTEXT("trimmed_serial_int32", fcinfo);
+
+	SET_VARSIZE(out, VARHDRSZ + len + hlen);
+
+	ptr = VARDATA(out);
+
+	memcpy(ptr, data, offsetof(struct_int32, elements));
+	ptr += offsetof(struct_int32, elements);
+
+	memcpy(ptr, data->elements, len);
+
+	PG_RETURN_BYTEA_P(out);
+}
+
+Datum
+trimmed_serial_int64(PG_FUNCTION_ARGS)
+{
+	struct_int64  *data = (struct_int64 *)PG_GETARG_POINTER(0);
+	Size			hlen = offsetof(struct_int64, elements);	/* header */
+	Size			len = data->next * sizeof(int64);			/* elements */
+	bytea		   *out = (bytea *)palloc(VARHDRSZ + len + hlen);
+	char		   *ptr;
+
+	CHECK_AGG_CONTEXT("trimmed_serial_int64", fcinfo);
+
+	SET_VARSIZE(out, VARHDRSZ + len + hlen);
+
+	ptr = VARDATA(out);
+
+	memcpy(ptr, data, offsetof(struct_int64, elements));
+	ptr += offsetof(struct_int64, elements);
+
+	memcpy(ptr, data->elements, len);
+
+	PG_RETURN_BYTEA_P(out);
+}
+
+Datum
+trimmed_serial_numeric(PG_FUNCTION_ARGS)
+{
+	int				i;
+	Size			hlen = offsetof(struct_numeric, elements);	/* header */
+	Size			len;										/* elements */
+	struct_numeric *data = (struct_numeric *)PG_GETARG_POINTER(0);
+	bytea		   *out;
+	char		   *ptr;
+
+	CHECK_AGG_CONTEXT("trimmed_serial_numeric", fcinfo);
+
+	/* sum sizes of all Numeric values to get the required size */
+	len = 0;
+	for (i = 0; i < data->next; i++)
+		len += VARSIZE(data->elements[i]);
+
+	out = (bytea *)palloc0(VARHDRSZ + len + hlen);
+	SET_VARSIZE(out, VARHDRSZ + len + hlen);
+
+	ptr = (char*) VARDATA(out);
+
+	memcpy(ptr, data, offsetof(struct_numeric, elements));
+	ptr += offsetof(struct_numeric, elements);
+
+	/* now copy the contents of each Numeric value into the buffer */
+	for (i = 0; i < data->next; i++)
+	{
+		memcpy(ptr, data->elements[i], VARSIZE(data->elements[i]));
+		ptr += VARSIZE(data->elements[i]);
+	}
+
+	/* we better get exactly the expected amount of data */
+	Assert((char*)VARDATA(out) + len + hlen == ptr);
+
+	PG_RETURN_BYTEA_P(out);
+}
+
+Datum
+trimmed_deserial_double(PG_FUNCTION_ARGS)
+{
+	struct_double *out = (struct_double *)palloc(sizeof(struct_double));
+	bytea  *data = (bytea *)PG_GETARG_POINTER(0);
+	Size	len = VARSIZE_ANY_EXHDR(data);
+	char   *ptr = VARDATA(data);
+
+	CHECK_AGG_CONTEXT("trimmed_deserial_double", fcinfo);
+
+	Assert(len > 0);
+	Assert(len % sizeof(double) == 0);
+
+	/* copy the header */
+	memcpy(out, ptr, offsetof(struct_double, elements));
+	ptr += offsetof(struct_double, elements);
+
+	Assert(len == offsetof(struct_double, elements) + out->next * sizeof(double));
+
+	/* we only allocate the necessary space */
+	out->elements = (double *)palloc(out->next * sizeof(double));
+	out->nelements = out->next;
+
+	memcpy((void *)out->elements, ptr, out->next * sizeof(double));
+
+	PG_RETURN_POINTER(out);
+}
+
+Datum
+trimmed_deserial_int32(PG_FUNCTION_ARGS)
+{
+	struct_int32 *out = (struct_int32 *)palloc(sizeof(struct_int32));
+	bytea  *data = (bytea *)PG_GETARG_POINTER(0);
+	Size	len = VARSIZE_ANY_EXHDR(data);
+	char   *ptr = VARDATA(data);
+
+	CHECK_AGG_CONTEXT("trimmed_deserial_int32", fcinfo);
+
+	Assert(len > 0);
+	Assert(len % sizeof(int32) == 0);
+
+	/* copy the header */
+	memcpy(out, ptr, offsetof(struct_int32, elements));
+	ptr += offsetof(struct_int32, elements);
+
+	Assert(len == offsetof(struct_int32, elements) + out->next * sizeof(int32));
+
+	/* we only allocate the necessary space */
+	out->elements = (int32 *)palloc(out->next * sizeof(int32));
+	out->nelements = out->next;
+
+	memcpy((void *)out->elements, ptr, out->next * sizeof(int32));
+
+	PG_RETURN_POINTER(out);
+}
+
+Datum
+trimmed_deserial_int64(PG_FUNCTION_ARGS)
+{
+	struct_int64 *out = (struct_int64 *)palloc(sizeof(struct_int64));
+	bytea  *data = (bytea *)PG_GETARG_POINTER(0);
+	Size	len = VARSIZE_ANY_EXHDR(data);
+	char   *ptr = VARDATA(data);
+
+	CHECK_AGG_CONTEXT("trimmed_deserial_int64", fcinfo);
+
+	Assert(len > 0);
+	Assert(len % sizeof(int64) == 0);
+
+	/* copy the header */
+	memcpy(out, ptr, offsetof(struct_int64, elements));
+	ptr += offsetof(struct_int64, elements);
+
+	Assert(len == offsetof(struct_int64, elements) + out->next * sizeof(int64));
+
+	/* we only allocate the necessary space */
+	out->elements = (int64 *)palloc(out->next * sizeof(int64));
+	out->nelements = out->next;
+
+	memcpy((void *)out->elements, ptr, out->next * sizeof(int64));
+
+	PG_RETURN_POINTER(out);
+}
+
+Datum
+trimmed_deserial_numeric(PG_FUNCTION_ARGS)
+{
+	int		i;
+	struct_numeric *out = (struct_numeric *)palloc(sizeof(struct_numeric));
+	bytea  *data = (bytea *)PG_GETARG_POINTER(0);
+	Size	len = VARSIZE_ANY_EXHDR(data);
+	char   *ptr = VARDATA(data);
+	char   *tmp;
+
+	CHECK_AGG_CONTEXT("trimmed_deserial_numeric", fcinfo);
+
+	Assert(len > 0);
+
+	/* first read the struct header, stored at the beginning */
+	memcpy(out, ptr, offsetof(struct_numeric, elements));
+	ptr += offsetof(struct_numeric, elements);
+
+	/* allocate an array with enough space for the Numeric pointers */
+	out->nelements = out->next; /* no slack space for new data */
+	out->elements = (Numeric *)palloc(out->next * sizeof(Numeric));
+
+	/*
+	 * we also need to copy the Numeric contents, but instead of copying
+	 * the values one by one, we copy the chunk of the serialized data
+	 */
+	tmp = palloc(len - sizeof(int));
+	memcpy(tmp, ptr, len - sizeof(int));
+	ptr = tmp;
+
+	/* and now just set the pointers in the elements array */
+	for (i = 0; i < out->next; i++)
+	{
+		out->elements[i] = (Numeric)ptr;
+		ptr += VARSIZE(ptr);
+
+		Assert(ptr <= tmp + (len - sizeof(int)));
+	}
+
+	PG_RETURN_POINTER(out);
+}
+
+Datum
+trimmed_combine_double(PG_FUNCTION_ARGS)
+{
+	struct_double *data1;
+	struct_double *data2;
+	MemoryContext agg_context;
+	MemoryContext old_context;
+
+	GET_AGG_CONTEXT("trimmed_combine_double", fcinfo, agg_context);
+
+	data1 = PG_ARGISNULL(0) ? NULL : (struct_double *) PG_GETARG_POINTER(0);
+	data2 = PG_ARGISNULL(1) ? NULL : (struct_double *) PG_GETARG_POINTER(1);
+
+	if (data2 == NULL)
+		PG_RETURN_POINTER(data1);
+
+	if (data1 == NULL)
+	{
+		old_context = MemoryContextSwitchTo(agg_context);
+
+		data1 = (struct_double *)palloc0(sizeof(struct_double));
+		data1->nelements = data2->nelements;
+		data1->next = data2->next;
+
+		data1->cut_lower = data2->cut_lower;
+		data1->cut_upper = data2->cut_upper;
+
+		data1->elements = (double*)palloc0(sizeof(double) * data2->nelements);
+
+		memcpy(data1->elements, data2->elements, sizeof(double) * data2->nelements);
+
+		MemoryContextSwitchTo(old_context);
+
+		PG_RETURN_POINTER(data1);
+	}
+
+	Assert((data1 != NULL) && (data2 != NULL));
+
+	/* if there's not enough space in data1, enlarge it */
+	if (data1->next + data2->next >= data1->nelements)
+	{
+		/* we size the array to match the size exactly */
+		data1->nelements = data1->next + data2->next;
+		data1->elements = (double *)repalloc(data1->elements,
+											 data1->nelements * sizeof(double));
+	}
+
+	/* copy the elements from data2 into data1 */
+	memcpy(data1->elements + data1->next, data2->elements,
+		   data2->next * sizeof(double));
+
+	/* and finally remember the current number of elements */
+	data1->next += data2->next;
+
+	PG_RETURN_POINTER(data1);
+}
+
+Datum
+trimmed_combine_int32(PG_FUNCTION_ARGS)
+{
+	struct_int32 *data1;
+	struct_int32 *data2;
+	MemoryContext agg_context;
+	MemoryContext old_context;
+
+	GET_AGG_CONTEXT("trimmed_combine_int32", fcinfo, agg_context);
+
+	data1 = PG_ARGISNULL(0) ? NULL : (struct_int32 *) PG_GETARG_POINTER(0);
+	data2 = PG_ARGISNULL(1) ? NULL : (struct_int32 *) PG_GETARG_POINTER(1);
+
+	if (data2 == NULL)
+		PG_RETURN_POINTER(data1);
+
+	if (data1 == NULL)
+	{
+		old_context = MemoryContextSwitchTo(agg_context);
+
+		data1 = (struct_int32 *)palloc0(sizeof(struct_int32));
+		data1->nelements = data2->nelements;
+		data1->next = data2->next;
+
+		data1->cut_lower = data2->cut_lower;
+		data1->cut_upper = data2->cut_upper;
+
+		data1->elements = (int32*)palloc0(sizeof(int32) * data2->nelements);
+
+		memcpy(data1->elements, data2->elements, sizeof(int32) * data2->nelements);
+
+		MemoryContextSwitchTo(old_context);
+
+		PG_RETURN_POINTER(data1);
+	}
+
+	Assert((data1 != NULL) && (data2 != NULL));
+
+	/* if there's not enough space in data1, enlarge it */
+	if (data1->next + data2->next >= data1->nelements)
+	{
+		/* we size the array to match the size exactly */
+		data1->nelements = data1->next + data2->next;
+		data1->elements = (int32 *)repalloc(data1->elements,
+											 data1->nelements * sizeof(int32));
+	}
+
+	/* copy the elements from data2 into data1 */
+	memcpy(data1->elements + data1->next, data2->elements,
+		   data2->next * sizeof(int32));
+
+	/* and finally remember the current number of elements */
+	data1->next += data2->next;
+
+	PG_RETURN_POINTER(data1);
+}
+
+Datum
+trimmed_combine_int64(PG_FUNCTION_ARGS)
+{
+	struct_int64 *data1;
+	struct_int64 *data2;
+	MemoryContext agg_context;
+	MemoryContext old_context;
+
+	GET_AGG_CONTEXT("trimmed_combine_int64", fcinfo, agg_context);
+
+	data1 = PG_ARGISNULL(0) ? NULL : (struct_int64 *) PG_GETARG_POINTER(0);
+	data2 = PG_ARGISNULL(1) ? NULL : (struct_int64 *) PG_GETARG_POINTER(1);
+
+	if (data2 == NULL)
+		PG_RETURN_POINTER(data1);
+
+	if (data1 == NULL)
+	{
+		old_context = MemoryContextSwitchTo(agg_context);
+
+		data1 = (struct_int64 *)palloc0(sizeof(struct_int64));
+		data1->nelements = data2->nelements;
+		data1->next = data2->next;
+
+		data1->cut_lower = data2->cut_lower;
+		data1->cut_upper = data2->cut_upper;
+
+		data1->elements = (int64*)palloc0(sizeof(int64) * data2->nelements);
+
+		memcpy(data1->elements, data2->elements, sizeof(int64) * data2->nelements);
+
+		MemoryContextSwitchTo(old_context);
+
+		PG_RETURN_POINTER(data1);
+	}
+
+	/* if there's not enough space in data1, enlarge it */
+	if (data1->next + data2->next >= data1->nelements)
+	{
+		/* we size the array to match the size exactly */
+		data1->nelements = data1->next + data2->next;
+		data1->elements = (int64 *)repalloc(data1->elements,
+											 data1->nelements * sizeof(int64));
+	}
+
+	/* copy the elements from data2 into data1 */
+	memcpy(data1->elements + data1->next, data2->elements,
+		   data2->next * sizeof(int64));
+
+	/* and finally remember the current number of elements */
+	data1->next += data2->next;
+
+	PG_RETURN_POINTER(data1);
+}
+
+Datum
+trimmed_combine_numeric(PG_FUNCTION_ARGS)
+{
+	Size			len;
+	int				i;
+	struct_numeric *data1;
+	struct_numeric *data2;
+	MemoryContext agg_context;
+	MemoryContext old_context;
+	char		   *tmp;
+
+	GET_AGG_CONTEXT("trimmed_combine_numeric", fcinfo, agg_context);
+
+	data1 = PG_ARGISNULL(0) ? NULL : (struct_numeric *) PG_GETARG_POINTER(0);
+	data2 = PG_ARGISNULL(1) ? NULL : (struct_numeric *) PG_GETARG_POINTER(1);
+
+	if (data2 == NULL)
+		PG_RETURN_POINTER(data1);
+
+	if (data1 == NULL)
+	{
+		old_context = MemoryContextSwitchTo(agg_context);
+
+		data1 = (struct_numeric *)palloc0(sizeof(struct_numeric));
+		data1->nelements = data2->nelements;
+		data1->next = 0;
+
+		data1->cut_lower = data2->cut_lower;
+		data1->cut_upper = data2->cut_upper;
+
+		data1->elements = (Numeric*)palloc0(sizeof(Numeric) * data2->nelements);
+
+		len = 0;
+		for (i = 0; i < data2->next; i++)
+			len += VARSIZE(data2->elements[i]);
+
+		tmp = palloc(len);
+
+		for (i = 0; i < data2->next; i++)
+		{
+			memcpy(tmp, data2->elements[i], VARSIZE(data2->elements[i]));
+			data1->elements[data1->next++] = (Numeric)tmp;
+			tmp += VARSIZE(data2->elements[i]);
+		}
+
+		MemoryContextSwitchTo(old_context);
+
+		PG_RETURN_POINTER(data1);
+	}
+
+	/* if there's not enough space in data1, enlarge it */
+	if (data1->next + data2->next >= data1->nelements)
+	{
+		/* we size the array to match the size exactly */
+		data1->nelements = data1->next + data2->next;
+		data1->elements = (Numeric *)repalloc(data1->elements,
+											  data1->nelements * sizeof(Numeric));
+	}
+
+	/*
+	 * we can't copy just the pointers - we need to copy the contents of the
+	 * Numeric datums too - to save space, we'll copy them into a single buffer
+	 * and use the pointers
+	 */
+	len = 0;
+	for (i = 0; i < data2->next; i++)
+		len += VARSIZE(data2->elements[i]);
+
+	old_context = MemoryContextSwitchTo(agg_context);
+	tmp = palloc(len);
+	MemoryContextSwitchTo(old_context);
+
+	for (i = 0; i < data2->next; i++)
+	{
+		memcpy(tmp, data2->elements[i], VARSIZE(data2->elements[i]));
+		data1->elements[data1->next++] = (Numeric)tmp;
+		tmp += VARSIZE(data2->elements[i]);
+	}
+
+	Assert(data1->next == data1->nelements);
+
+	PG_RETURN_POINTER(data1);
 }
 
 Datum
