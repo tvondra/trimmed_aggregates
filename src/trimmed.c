@@ -565,7 +565,7 @@ trimmed_serial_numeric(PG_FUNCTION_ARGS)
 	for (i = 0; i < data->nelements; i++)
 		len += VARSIZE(data->elements[i]);
 
-	out = (bytea *)palloc0(VARHDRSZ + len + hlen);
+	out = (bytea *)palloc(VARHDRSZ + len + hlen);
 	SET_VARSIZE(out, VARHDRSZ + len + hlen);
 
 	ptr = (char*) VARDATA(out);
@@ -732,14 +732,14 @@ trimmed_combine_double(PG_FUNCTION_ARGS)
 	{
 		old_context = MemoryContextSwitchTo(agg_context);
 
-		data1 = (state_double *)palloc0(sizeof(state_double));
+		data1 = (state_double *)palloc(sizeof(state_double));
 		data1->maxelements = data2->maxelements;
 		data1->nelements = data2->nelements;
 
 		data1->cut_lower = data2->cut_lower;
 		data1->cut_upper = data2->cut_upper;
 
-		data1->elements = (double*)palloc0(sizeof(double) * data2->maxelements);
+		data1->elements = (double*)palloc(sizeof(double) * data2->maxelements);
 
 		memcpy(data1->elements, data2->elements, sizeof(double) * data2->maxelements);
 
@@ -789,14 +789,14 @@ trimmed_combine_int32(PG_FUNCTION_ARGS)
 	{
 		old_context = MemoryContextSwitchTo(agg_context);
 
-		data1 = (state_int32 *)palloc0(sizeof(state_int32));
+		data1 = (state_int32 *)palloc(sizeof(state_int32));
 		data1->maxelements = data2->maxelements;
 		data1->nelements = data2->nelements;
 
 		data1->cut_lower = data2->cut_lower;
 		data1->cut_upper = data2->cut_upper;
 
-		data1->elements = (int32*)palloc0(sizeof(int32) * data2->maxelements);
+		data1->elements = (int32*)palloc(sizeof(int32) * data2->maxelements);
 
 		memcpy(data1->elements, data2->elements, sizeof(int32) * data2->maxelements);
 
@@ -846,14 +846,14 @@ trimmed_combine_int64(PG_FUNCTION_ARGS)
 	{
 		old_context = MemoryContextSwitchTo(agg_context);
 
-		data1 = (state_int64 *)palloc0(sizeof(state_int64));
+		data1 = (state_int64 *)palloc(sizeof(state_int64));
 		data1->maxelements = data2->maxelements;
 		data1->nelements = data2->nelements;
 
 		data1->cut_lower = data2->cut_lower;
 		data1->cut_upper = data2->cut_upper;
 
-		data1->elements = (int64*)palloc0(sizeof(int64) * data2->maxelements);
+		data1->elements = (int64*)palloc(sizeof(int64) * data2->maxelements);
 
 		memcpy(data1->elements, data2->elements, sizeof(int64) * data2->maxelements);
 
@@ -904,14 +904,14 @@ trimmed_combine_numeric(PG_FUNCTION_ARGS)
 	{
 		old_context = MemoryContextSwitchTo(agg_context);
 
-		data1 = (state_numeric *)palloc0(sizeof(state_numeric));
+		data1 = (state_numeric *)palloc(sizeof(state_numeric));
 		data1->maxelements = data2->maxelements;
 		data1->nelements = 0;
 
 		data1->cut_lower = data2->cut_lower;
 		data1->cut_upper = data2->cut_upper;
 
-		data1->elements = (Numeric*)palloc0(sizeof(Numeric) * data2->maxelements);
+		data1->elements = (Numeric*)palloc(sizeof(Numeric) * data2->maxelements);
 
 		len = 0;
 		for (i = 0; i < data2->nelements; i++)
