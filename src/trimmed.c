@@ -760,6 +760,10 @@ trimmed_combine_double(PG_FUNCTION_ARGS)
 
 		MemoryContextSwitchTo(old_context);
 
+		/* free the internal state */
+		pfree(data2->elements);
+		data2->elements = NULL;
+
 		PG_RETURN_POINTER(data1);
 	}
 
@@ -816,6 +820,10 @@ trimmed_combine_int32(PG_FUNCTION_ARGS)
 		memcpy(data1->elements, data2->elements, sizeof(int32) * data2->maxelements);
 
 		MemoryContextSwitchTo(old_context);
+
+		/* free the internal state */
+		pfree(data2->elements);
+		data2->elements = NULL;
 
 		PG_RETURN_POINTER(data1);
 	}
@@ -942,6 +950,10 @@ trimmed_combine_numeric(PG_FUNCTION_ARGS)
 		}
 
 		MemoryContextSwitchTo(old_context);
+
+		/* free the internal state */
+		pfree(data2->elements);
+		data2->elements = NULL;
 
 		PG_RETURN_POINTER(data1);
 	}
