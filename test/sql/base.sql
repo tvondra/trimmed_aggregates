@@ -15,39 +15,39 @@ CREATE OR REPLACE FUNCTION round(p_val double precision, p_digits int) RETURNS d
 $$ LANGUAGE sql;
 
 -- int
-SELECT round(avg_trimmed(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(var_trimmed(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(var_pop_trimmed(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(var_samp_trimmed(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(stddev_trimmed(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(stddev_pop_trimmed(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(stddev_samp_trimmed(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(avg(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(var(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(var_pop(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(var_samp(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(stddev(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(stddev_pop(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(stddev_samp(x, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
 
 -- bigint
-SELECT round(avg_trimmed(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(var_trimmed(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(var_pop_trimmed(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(var_samp_trimmed(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(stddev_trimmed(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(stddev_pop_trimmed(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(stddev_samp_trimmed(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(avg(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(var(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(var_pop(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(var_samp(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(stddev(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(stddev_pop(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(stddev_samp(x::bigint, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
 
 -- double precision
-SELECT round(avg_trimmed(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(var_trimmed(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(var_pop_trimmed(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(var_samp_trimmed(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(stddev_trimmed(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(stddev_pop_trimmed(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(stddev_samp_trimmed(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(avg(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(var(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(var_pop(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(var_samp(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(stddev(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(stddev_pop(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(stddev_samp(x::double precision, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
 
 -- numeric
-SELECT round(avg_trimmed(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(var_trimmed(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(var_pop_trimmed(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(var_samp_trimmed(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(stddev_trimmed(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(stddev_pop_trimmed(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
-SELECT round(stddev_samp_trimmed(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(avg(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(var(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(var_pop(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(var_samp(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(stddev(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(stddev_pop(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
+SELECT round(stddev_samp(x::numeric, 0.1, 0.1),3) FROM generate_series(1,1000) s(x);
 
 ROLLBACK;

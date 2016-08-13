@@ -103,7 +103,7 @@ CREATE OR REPLACE FUNCTION trimmed_avg_numeric(p_pointer internal)
     AS 'trimmed_aggregates', 'trimmed_avg_numeric'
     LANGUAGE C IMMUTABLE;
 
-CREATE AGGREGATE avg_trimmed(double precision, double precision, double precision) (
+CREATE AGGREGATE avg(double precision, double precision, double precision) (
     SFUNC = trimmed_append_double,
     STYPE = internal,
     FINALFUNC = trimmed_avg_double,
@@ -113,7 +113,7 @@ CREATE AGGREGATE avg_trimmed(double precision, double precision, double precisio
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE avg_trimmed(int, double precision, double precision) (
+CREATE AGGREGATE avg(int, double precision, double precision) (
     SFUNC = trimmed_append_int32,
     STYPE = internal,
     FINALFUNC = trimmed_avg_int32,
@@ -123,7 +123,7 @@ CREATE AGGREGATE avg_trimmed(int, double precision, double precision) (
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE avg_trimmed(bigint, double precision, double precision) (
+CREATE AGGREGATE avg(bigint, double precision, double precision) (
     SFUNC = trimmed_append_int64,
     STYPE = internal,
     FINALFUNC = trimmed_avg_int64,
@@ -133,7 +133,7 @@ CREATE AGGREGATE avg_trimmed(bigint, double precision, double precision) (
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE avg_trimmed(numeric, double precision, double precision) (
+CREATE AGGREGATE avg(numeric, double precision, double precision) (
     SFUNC = trimmed_append_numeric,
     STYPE = internal,
     FINALFUNC = trimmed_avg_numeric,
@@ -164,7 +164,7 @@ CREATE OR REPLACE FUNCTION trimmed_var_numeric(p_pointer internal)
     AS 'trimmed_aggregates', 'trimmed_var_numeric'
     LANGUAGE C IMMUTABLE;
 
-CREATE AGGREGATE var_trimmed(double precision, double precision, double precision) (
+CREATE AGGREGATE var(double precision, double precision, double precision) (
     SFUNC = trimmed_append_double,
     STYPE = internal,
     FINALFUNC = trimmed_var_double,
@@ -174,7 +174,7 @@ CREATE AGGREGATE var_trimmed(double precision, double precision, double precisio
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE var_trimmed(int, double precision, double precision) (
+CREATE AGGREGATE var(int, double precision, double precision) (
     SFUNC = trimmed_append_int32,
     STYPE = internal,
     FINALFUNC = trimmed_var_int32,
@@ -184,7 +184,7 @@ CREATE AGGREGATE var_trimmed(int, double precision, double precision) (
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE var_trimmed(bigint, double precision, double precision) (
+CREATE AGGREGATE var(bigint, double precision, double precision) (
     SFUNC = trimmed_append_int64,
     STYPE = internal,
     FINALFUNC = trimmed_var_int64,
@@ -194,7 +194,7 @@ CREATE AGGREGATE var_trimmed(bigint, double precision, double precision) (
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE var_trimmed(numeric, double precision, double precision) (
+CREATE AGGREGATE var(numeric, double precision, double precision) (
     SFUNC = trimmed_append_numeric,
     STYPE = internal,
     FINALFUNC = trimmed_var_numeric,
@@ -225,7 +225,7 @@ CREATE OR REPLACE FUNCTION trimmed_var_pop_numeric(p_pointer internal)
     AS 'trimmed_aggregates', 'trimmed_var_pop_numeric'
     LANGUAGE C IMMUTABLE;
 
-CREATE AGGREGATE var_pop_trimmed(double precision, double precision, double precision) (
+CREATE AGGREGATE var_pop(double precision, double precision, double precision) (
     SFUNC = trimmed_append_double,
     STYPE = internal,
     FINALFUNC = trimmed_var_pop_double,
@@ -235,7 +235,7 @@ CREATE AGGREGATE var_pop_trimmed(double precision, double precision, double prec
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE var_pop_trimmed(int, double precision, double precision) (
+CREATE AGGREGATE var_pop(int, double precision, double precision) (
     SFUNC = trimmed_append_int32,
     STYPE = internal,
     FINALFUNC = trimmed_var_pop_int32,
@@ -245,7 +245,7 @@ CREATE AGGREGATE var_pop_trimmed(int, double precision, double precision) (
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE var_pop_trimmed(bigint, double precision, double precision) (
+CREATE AGGREGATE var_pop(bigint, double precision, double precision) (
     SFUNC = trimmed_append_int64,
     STYPE = internal,
     FINALFUNC = trimmed_var_pop_int64,
@@ -255,7 +255,7 @@ CREATE AGGREGATE var_pop_trimmed(bigint, double precision, double precision) (
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE var_pop_trimmed(numeric, double precision, double precision) (
+CREATE AGGREGATE var_pop(numeric, double precision, double precision) (
     SFUNC = trimmed_append_numeric,
     STYPE = internal,
     FINALFUNC = trimmed_var_pop_numeric,
@@ -286,7 +286,7 @@ CREATE OR REPLACE FUNCTION trimmed_var_samp_numeric(p_pointer internal)
     AS 'trimmed_aggregates', 'trimmed_var_samp_numeric'
     LANGUAGE C IMMUTABLE;
 
-CREATE AGGREGATE var_samp_trimmed(double precision, double precision, double precision) (
+CREATE AGGREGATE var_samp(double precision, double precision, double precision) (
     SFUNC = trimmed_append_double,
     STYPE = internal,
     FINALFUNC = trimmed_var_samp_double,
@@ -296,7 +296,7 @@ CREATE AGGREGATE var_samp_trimmed(double precision, double precision, double pre
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE var_samp_trimmed(int, double precision, double precision) (
+CREATE AGGREGATE var_samp(int, double precision, double precision) (
     SFUNC = trimmed_append_int32,
     STYPE = internal,
     FINALFUNC = trimmed_var_samp_int32,
@@ -306,7 +306,7 @@ CREATE AGGREGATE var_samp_trimmed(int, double precision, double precision) (
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE var_samp_trimmed(bigint, double precision, double precision) (
+CREATE AGGREGATE var_samp(bigint, double precision, double precision) (
     SFUNC = trimmed_append_int64,
     STYPE = internal,
     FINALFUNC = trimmed_var_samp_int64,
@@ -316,7 +316,7 @@ CREATE AGGREGATE var_samp_trimmed(bigint, double precision, double precision) (
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE var_samp_trimmed(numeric, double precision, double precision) (
+CREATE AGGREGATE var_samp(numeric, double precision, double precision) (
     SFUNC = trimmed_append_numeric,
     STYPE = internal,
     FINALFUNC = trimmed_var_samp_numeric,
@@ -347,7 +347,7 @@ CREATE OR REPLACE FUNCTION trimmed_stddev_numeric(p_pointer internal)
     AS 'trimmed_aggregates', 'trimmed_stddev_numeric'
     LANGUAGE C IMMUTABLE;
 
-CREATE AGGREGATE stddev_trimmed(double precision, double precision, double precision) (
+CREATE AGGREGATE stddev(double precision, double precision, double precision) (
     SFUNC = trimmed_append_double,
     STYPE = internal,
     FINALFUNC = trimmed_stddev_double,
@@ -357,7 +357,7 @@ CREATE AGGREGATE stddev_trimmed(double precision, double precision, double preci
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE stddev_trimmed(int, double precision, double precision) (
+CREATE AGGREGATE stddev(int, double precision, double precision) (
     SFUNC = trimmed_append_int32,
     STYPE = internal,
     FINALFUNC = trimmed_stddev_int32,
@@ -367,7 +367,7 @@ CREATE AGGREGATE stddev_trimmed(int, double precision, double precision) (
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE stddev_trimmed(bigint, double precision, double precision) (
+CREATE AGGREGATE stddev(bigint, double precision, double precision) (
     SFUNC = trimmed_append_int64,
     STYPE = internal,
     FINALFUNC = trimmed_stddev_int64,
@@ -377,7 +377,7 @@ CREATE AGGREGATE stddev_trimmed(bigint, double precision, double precision) (
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE stddev_trimmed(numeric, double precision, double precision) (
+CREATE AGGREGATE stddev(numeric, double precision, double precision) (
     SFUNC = trimmed_append_numeric,
     STYPE = internal,
     FINALFUNC = trimmed_stddev_numeric,
@@ -408,7 +408,7 @@ CREATE OR REPLACE FUNCTION trimmed_stddev_pop_numeric(p_pointer internal)
     AS 'trimmed_aggregates', 'trimmed_stddev_pop_numeric'
     LANGUAGE C IMMUTABLE;
 
-CREATE AGGREGATE stddev_pop_trimmed(double precision, double precision, double precision) (
+CREATE AGGREGATE stddev_pop(double precision, double precision, double precision) (
     SFUNC = trimmed_append_double,
     STYPE = internal,
     FINALFUNC = trimmed_stddev_pop_double,
@@ -418,7 +418,7 @@ CREATE AGGREGATE stddev_pop_trimmed(double precision, double precision, double p
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE stddev_pop_trimmed(int, double precision, double precision) (
+CREATE AGGREGATE stddev_pop(int, double precision, double precision) (
     SFUNC = trimmed_append_int32,
     STYPE = internal,
     FINALFUNC = trimmed_stddev_pop_int32,
@@ -428,7 +428,7 @@ CREATE AGGREGATE stddev_pop_trimmed(int, double precision, double precision) (
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE stddev_pop_trimmed(bigint, double precision, double precision) (
+CREATE AGGREGATE stddev_pop(bigint, double precision, double precision) (
     SFUNC = trimmed_append_int64,
     STYPE = internal,
     FINALFUNC = trimmed_stddev_pop_int64,
@@ -438,7 +438,7 @@ CREATE AGGREGATE stddev_pop_trimmed(bigint, double precision, double precision) 
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE stddev_pop_trimmed(numeric, double precision, double precision) (
+CREATE AGGREGATE stddev_pop(numeric, double precision, double precision) (
     SFUNC = trimmed_append_numeric,
     STYPE = internal,
     FINALFUNC = trimmed_stddev_pop_numeric,
@@ -469,7 +469,7 @@ CREATE OR REPLACE FUNCTION trimmed_stddev_samp_numeric(p_pointer internal)
     AS 'trimmed_aggregates', 'trimmed_stddev_samp_numeric'
     LANGUAGE C IMMUTABLE;
 
-CREATE AGGREGATE stddev_samp_trimmed(double precision, double precision, double precision) (
+CREATE AGGREGATE stddev_samp(double precision, double precision, double precision) (
     SFUNC = trimmed_append_double,
     STYPE = internal,
     FINALFUNC = trimmed_stddev_samp_double,
@@ -479,7 +479,7 @@ CREATE AGGREGATE stddev_samp_trimmed(double precision, double precision, double 
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE stddev_samp_trimmed(int, double precision, double precision) (
+CREATE AGGREGATE stddev_samp(int, double precision, double precision) (
     SFUNC = trimmed_append_int32,
     STYPE = internal,
     FINALFUNC = trimmed_stddev_samp_int32,
@@ -489,7 +489,7 @@ CREATE AGGREGATE stddev_samp_trimmed(int, double precision, double precision) (
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE stddev_samp_trimmed(bigint, double precision, double precision) (
+CREATE AGGREGATE stddev_samp(bigint, double precision, double precision) (
     SFUNC = trimmed_append_int64,
     STYPE = internal,
     FINALFUNC = trimmed_stddev_samp_int64,
@@ -499,7 +499,7 @@ CREATE AGGREGATE stddev_samp_trimmed(bigint, double precision, double precision)
     PARALLEL = SAFE
 );
 
-CREATE AGGREGATE stddev_samp_trimmed(numeric, double precision, double precision) (
+CREATE AGGREGATE stddev_samp(numeric, double precision, double precision) (
     SFUNC = trimmed_append_numeric,
     STYPE = internal,
     FINALFUNC = trimmed_stddev_samp_numeric,
