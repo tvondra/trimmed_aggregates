@@ -1,6 +1,13 @@
 /*
 * trimmed.c - Trimmed aggregate functions
 * Copyright (C) Tomas Vondra, 2011-2016
+*
+*
+* Implementation of trimmed avg/stddev/var aggregates.
+*
+* The memory consumption might be a problem, as all the values are kept in
+* memory - for example 1.000.000 of 8-byte values (bigint) requires about
+* 8MB of memory.
 */
 
 #include <stdio.h>
@@ -267,15 +274,6 @@ static Numeric mul_numeric(Numeric a, Numeric b);
 static Numeric pow_numeric(Numeric a, int b);
 static Numeric sqrt_numeric(Numeric a);
 
-
-/* These functions use a bit dirty trick to pass the data - the int
- * value is actually a pointer to the array allocated in the parent
- * memory context. A bit ugly but works fine.
- *
- * The memory consumption might be a problem, as all the values are
- * kept in the memory - for example 1.000.000 of 8-byte values (bigint)
- * requires about 8MB of memory.
- */
 
 Datum
 trimmed_append_double(PG_FUNCTION_ARGS)
