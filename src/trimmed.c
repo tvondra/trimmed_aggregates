@@ -48,6 +48,8 @@ PG_MODULE_MAGIC;
 /* how many elements to start with */
 #define MIN_ELEMENTS	32
 
+static Numeric const_zero = NULL;
+
 /* FIXME The final functions copy a lot of code - refactor to share. */
 
 /* Structures used to keep the data - the 'elements' array is extended
@@ -113,6 +115,7 @@ static int  double_comparator(const void *a, const void *b);
 static int  int32_comparator(const void *a, const void *b);
 static int  int64_comparator(const void *a, const void *b);
 static int  numeric_comparator(const void *a, const void *b);
+static Numeric *numeric_zero(void);
 
 static Datum
 double_to_array(FunctionCallInfo fcinfo, double * d, int len);
@@ -1752,7 +1755,7 @@ Datum
 trimmed_var_pop_double(PG_FUNCTION_ARGS)
 {
 	int		i, from, to, cnt;
-	double	sum_x = 0, sum_x2 = 0;
+	double	sum_x = 0, sum_x2 = 0, numerator;
 
 	state_double *state;
 
@@ -1781,14 +1784,19 @@ trimmed_var_pop_double(PG_FUNCTION_ARGS)
 		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
-	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt));
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = (cnt * sum_x2 - sum_x * sum_x);
+	if (numerator <= 0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8 (numerator / (cnt * cnt));
 }
 
 Datum
 trimmed_var_pop_int32(PG_FUNCTION_ARGS)
 {
 	int		i, from, to, cnt;
-	double	sum_x = 0, sum_x2 = 0;
+	double	sum_x = 0, sum_x2 = 0, numerator;
 
 	state_int32 *state;
 
@@ -1817,14 +1825,19 @@ trimmed_var_pop_int32(PG_FUNCTION_ARGS)
 		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
-	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt));
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = (cnt * sum_x2 - sum_x * sum_x);
+	if (numerator <= 0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8 (numerator / (cnt * cnt));
 }
 
 Datum
 trimmed_var_pop_int64(PG_FUNCTION_ARGS)
 {
 	int		i, from, to, cnt;
-	double  sum_x = 0, sum_x2 = 0;
+	double  sum_x = 0, sum_x2 = 0, numerator;
 
 	state_int64 *state;
 
@@ -1853,14 +1866,19 @@ trimmed_var_pop_int64(PG_FUNCTION_ARGS)
 		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
-	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt));
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = (cnt * sum_x2 - sum_x * sum_x);
+	if (numerator <= 0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8 (numerator / (cnt * cnt));
 }
 
 Datum
 trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 {
 	int		i, from, to;
-	Numeric	sum_x, sum_x2, cnt;
+	Numeric	sum_x, sum_x2, cnt, numerator;
 	Numeric *elements;
 
 	state_numeric *state;
@@ -1899,10 +1917,16 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 
 	pfree(elements);
 
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = sub_numeric(
+					mul_numeric(cnt, sum_x2),
+					mul_numeric(sum_x, sum_x));
+
+	if (numeric_comparator(&numerator, numeric_zero()) <= 0)
+		PG_RETURN_NUMERIC(const_zero);
+
 	PG_RETURN_NUMERIC (div_numeric(
-							sub_numeric(
-								mul_numeric(cnt, sum_x2),
-								mul_numeric(sum_x, sum_x)),
+							numerator,
 							mul_numeric(cnt, cnt)));
 }
 
@@ -1910,7 +1934,7 @@ Datum
 trimmed_var_samp_double(PG_FUNCTION_ARGS)
 {
 	int		i, from, to, cnt;
-	double	sum_x = 0, sum_x2 = 0;
+	double	sum_x = 0, sum_x2 = 0, numerator;
 
 	state_double *state;
 
@@ -1939,14 +1963,19 @@ trimmed_var_samp_double(PG_FUNCTION_ARGS)
 		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
-	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)));
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = (cnt * sum_x2 - sum_x * sum_x);
+	if (numerator <= 0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8 (numerator / (cnt * (cnt - 1)));
 }
 
 Datum
 trimmed_var_samp_int32(PG_FUNCTION_ARGS)
 {
 	int		i, from, to, cnt;
-	double	sum_x = 0, sum_x2 = 0;
+	double	sum_x = 0, sum_x2 = 0, numerator;
 
 	state_int32 *state;
 
@@ -1975,14 +2004,19 @@ trimmed_var_samp_int32(PG_FUNCTION_ARGS)
 		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
-	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)));
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = (cnt * sum_x2 - sum_x * sum_x);
+	if (numerator <= 0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8 (numerator / (cnt * (cnt - 1)));
 }
 
 Datum
 trimmed_var_samp_int64(PG_FUNCTION_ARGS)
 {
 	int		i, from, to, cnt;
-	double	sum_x = 0, sum_x2 = 0;
+	double	sum_x = 0, sum_x2 = 0, numerator;
 
 	state_int64 *state;
 
@@ -2011,14 +2045,19 @@ trimmed_var_samp_int64(PG_FUNCTION_ARGS)
 		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
-	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)));
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = (cnt * sum_x2 - sum_x * sum_x);
+	if (numerator <= 0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8 (numerator / (cnt * (cnt - 1)));
 }
 
 Datum
 trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 {
 	int		i, from, to;
-	Numeric	sum_x, sum_x2, cnt;
+	Numeric	sum_x, sum_x2, cnt, numerator;
 	Numeric *elements;
 
 	state_numeric *state;
@@ -2057,11 +2096,16 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 
 	pfree(elements);
 
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = sub_numeric(
+					mul_numeric(cnt, sum_x2),
+					mul_numeric(sum_x, sum_x));
+
+	if (numeric_comparator(&numerator, numeric_zero()) <= 0)
+		PG_RETURN_NUMERIC(const_zero);
+
 	PG_RETURN_NUMERIC (div_numeric(
-							sub_numeric(
-								mul_numeric(cnt, sum_x2),
-								mul_numeric(sum_x, sum_x)
-							),
+							numerator,
 							mul_numeric(
 								cnt,
 								sub_numeric(cnt, create_numeric(1)))));
@@ -2230,7 +2274,7 @@ Datum
 trimmed_stddev_pop_double(PG_FUNCTION_ARGS)
 {
 	int		i, from, to, cnt;
-	double	sum_x = 0, sum_x2 = 0;
+	double	sum_x = 0, sum_x2 = 0, numerator;
 
 	state_double *state;
 
@@ -2259,14 +2303,19 @@ trimmed_stddev_pop_double(PG_FUNCTION_ARGS)
 		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
-	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt)));
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = (cnt * sum_x2 - sum_x * sum_x);
+	if (numerator <= 0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8 (sqrt(numerator / (cnt * cnt)));
 }
 
 Datum
 trimmed_stddev_pop_int32(PG_FUNCTION_ARGS)
 {
 	int		i, from, to, cnt;
-	double	sum_x = 0, sum_x2 = 0;
+	double	sum_x = 0, sum_x2 = 0, numerator;
 
 	state_int32 *state;
 
@@ -2295,14 +2344,19 @@ trimmed_stddev_pop_int32(PG_FUNCTION_ARGS)
 		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
-	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt)));
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = (cnt * sum_x2 - sum_x * sum_x);
+	if (numerator <= 0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8 (sqrt(numerator / (cnt * cnt)));
 }
 
 Datum
 trimmed_stddev_pop_int64(PG_FUNCTION_ARGS)
 {
 	int		i, from, to, cnt;
-	double	sum_x = 0, sum_x2 = 0;
+	double	sum_x = 0, sum_x2 = 0, numerator;
 
 	state_int64 *state;
 
@@ -2331,14 +2385,19 @@ trimmed_stddev_pop_int64(PG_FUNCTION_ARGS)
 		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
-	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt)));
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = (cnt * sum_x2 - sum_x * sum_x);
+	if (numerator <= 0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8 (sqrt(numerator / (cnt * cnt)));
 }
 
 Datum
 trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 {
 	int		i, from, to;
-	Numeric	sum_x, sum_x2, cnt;
+	Numeric	sum_x, sum_x2, cnt, numerator;
 	Numeric *elements;
 
 	state_numeric *state;
@@ -2377,11 +2436,17 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 
 	pfree(elements);
 
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = sub_numeric(
+						mul_numeric(cnt, sum_x2),
+						mul_numeric(sum_x, sum_x));
+
+	if (numeric_comparator(&numerator, numeric_zero()) <= 0)
+		PG_RETURN_NUMERIC(const_zero);
+
 	PG_RETURN_NUMERIC (sqrt_numeric(
 							div_numeric(
-								sub_numeric(
-									mul_numeric(cnt, sum_x2),
-									mul_numeric(sum_x, sum_x)),
+								numerator,
 								pow_numeric(cnt, 2))));
 }
 
@@ -2389,7 +2454,7 @@ Datum
 trimmed_stddev_samp_double(PG_FUNCTION_ARGS)
 {
 	int		i, from, to, cnt;
-	double	sum_x = 0, sum_x2 = 0;
+	double	sum_x = 0, sum_x2 = 0, numerator;
 
 	state_double *state;
 
@@ -2418,14 +2483,19 @@ trimmed_stddev_samp_double(PG_FUNCTION_ARGS)
 		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
-	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1))));
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = (cnt * sum_x2 - sum_x * sum_x);
+	if (numerator <= 0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8 (sqrt(numerator / (cnt * (cnt - 1))));
 }
 
 Datum
 trimmed_stddev_samp_int32(PG_FUNCTION_ARGS)
 {
 	int		i, from, to, cnt;
-	double	sum_x = 0, sum_x2 = 0;
+	double	sum_x = 0, sum_x2 = 0, numerator;
 
 	state_int32 *state;
 
@@ -2454,14 +2524,19 @@ trimmed_stddev_samp_int32(PG_FUNCTION_ARGS)
 		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
-	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1))));
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = (cnt * sum_x2 - sum_x * sum_x);
+	if (numerator <= 0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8 (sqrt(numerator / (cnt * (cnt - 1))));
 }
 
 Datum
 trimmed_stddev_samp_int64(PG_FUNCTION_ARGS)
 {
 	int		i, from, to, cnt;
-	double	sum_x = 0, sum_x2 = 0;
+	double	sum_x = 0, sum_x2 = 0, numerator;
 
 	state_int64 *state;
 
@@ -2490,14 +2565,19 @@ trimmed_stddev_samp_int64(PG_FUNCTION_ARGS)
 		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
-	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1))));
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = (cnt * sum_x2 - sum_x * sum_x);
+	if (numerator <= 0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8 (sqrt(numerator / (cnt * (cnt - 1))));
 }
 
 Datum
 trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 {
 	int		i, from, to;
-	Numeric	sum_x, sum_x2, cnt;
+	Numeric	sum_x, sum_x2, cnt, numerator;
 	Numeric *elements;
 
 	state_numeric *state;
@@ -2534,11 +2614,17 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 
 	pfree(elements);
 
+	/* Watch out for roundoff error producing a negative numerator */
+	numerator = sub_numeric(
+						mul_numeric(cnt, sum_x2),
+						pow_numeric(sum_x, 2));
+
+	if (numeric_comparator(&numerator, numeric_zero()) <= 0)
+		PG_RETURN_NUMERIC(const_zero);
+
 	PG_RETURN_NUMERIC (sqrt_numeric(
 							div_numeric(
-								sub_numeric(
-									mul_numeric(cnt, sum_x2),
-									pow_numeric(sum_x, 2)),
+								numerator,
 								mul_numeric(
 									cnt,
 									sub_numeric(cnt, create_numeric(1))))));
@@ -2692,6 +2778,26 @@ sqrt_numeric(Numeric a)
 	return DatumGetNumeric(numeric_sqrt(&fcinfo));
 }
 
+static Numeric *
+numeric_zero()
+{
+	Datum d;
+
+	if (const_zero != NULL)
+		return &const_zero;
+
+	d = DirectFunctionCall1(
+			numeric_in,
+			DirectFunctionCall1(
+				int4out,
+				Int32GetDatum(0)
+			)
+		);
+
+	const_zero = (Numeric)DatumGetPointer(d);
+
+	return &const_zero;
+}
 
 /*
  * Helper functions used to prepare the resulting array (when there's
