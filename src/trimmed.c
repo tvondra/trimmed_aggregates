@@ -336,6 +336,8 @@ trimmed_append_double(PG_FUNCTION_ARGS)
 		state->elements[state->nelements++] = element;
 	}
 
+	Assert((state->nelements >= 0) && (state->nelements <= state->maxelements));
+
 	PG_RETURN_POINTER(state);
 }
 
@@ -400,6 +402,8 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
 		state->elements[state->nelements++] = element;
 	}
 
+	Assert((state->nelements >= 0) && (state->nelements <= state->maxelements));
+
 	PG_RETURN_POINTER(state);
 }
 
@@ -463,6 +467,8 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
 
 		state->elements[state->nelements++] = element;
 	}
+
+	Assert((state->nelements >= 0) && (state->nelements <= state->maxelements));
 
 	PG_RETURN_POINTER(state);
 }
@@ -538,6 +544,9 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 		state->usedlen += len;
 		state->nelements += 1;
 	}
+
+	Assert(state->usedlen <= state->maxlen);
+	Assert((!state->usedlen && !state->data) || (state->usedlen && state->data));
 
 	PG_RETURN_POINTER(state);
 }
@@ -709,6 +718,7 @@ trimmed_deserial_double(PG_FUNCTION_ARGS)
 	memcpy(out, ptr, offsetof(state_double, elements));
 	ptr += offsetof(state_double, elements);
 
+	Assert((out->nelements > 0) && (out->maxelements >= out->nelements));
 	Assert(len == offsetof(state_double, elements) + out->nelements * sizeof(double));
 
 	/* we only allocate the necessary space */
@@ -737,6 +747,7 @@ trimmed_deserial_int32(PG_FUNCTION_ARGS)
 	memcpy(out, ptr, offsetof(state_int32, elements));
 	ptr += offsetof(state_int32, elements);
 
+	Assert((out->nelements > 0) && (out->maxelements >= out->nelements));
 	Assert(len == offsetof(state_int32, elements) + out->nelements * sizeof(int32));
 
 	/* we only allocate the necessary space */
@@ -765,6 +776,7 @@ trimmed_deserial_int64(PG_FUNCTION_ARGS)
 	memcpy(out, ptr, offsetof(state_int64, elements));
 	ptr += offsetof(state_int64, elements);
 
+	Assert((out->nelements > 0) && (out->maxelements >= out->nelements));
 	Assert(len == offsetof(state_int64, elements) + out->nelements * sizeof(int64));
 
 	/* we only allocate the necessary space */
@@ -791,6 +803,11 @@ trimmed_deserial_numeric(PG_FUNCTION_ARGS)
 	/* first read the struct header, stored at the beginning */
 	memcpy(out, ptr, offsetof(state_numeric, data));
 	ptr += offsetof(state_numeric, data);
+
+	/* we don't serialize empty groups (we keep the state NULL) */
+	Assert((out->nelements > 0) && (out->usedlen > 0));
+	Assert(out->usedlen <= out->maxlen);
+	Assert(out->usedlen == (len - offsetof(state_numeric, data)));
 
 	/* fist copy the Numeric values into the buffer */
 	out->data = palloc(len - offsetof(state_numeric, data));
@@ -852,6 +869,9 @@ trimmed_combine_double(PG_FUNCTION_ARGS)
 	i = j = k = 0;
 	while (true)
 	{
+		Assert(k <= (state1->nelements + state2->nelements));
+		Assert((i <= state1->nelements) && (j <= state2->nelements));
+
 		if ((i < state1->nelements) && (j < state2->nelements))
 		{
 			if (state1->elements[i] <= state2->elements[j])
@@ -867,6 +887,9 @@ trimmed_combine_double(PG_FUNCTION_ARGS)
 			/* no more elements to process */
 			break;
 	}
+
+	Assert(k == (state1->nelements + state2->nelements));
+	Assert((i == state1->nelements) && (j == state2->nelements));
 
 	/* free the two arrays */
 	pfree(state1->elements);
@@ -933,6 +956,9 @@ trimmed_combine_int32(PG_FUNCTION_ARGS)
 	i = j = k = 0;
 	while (true)
 	{
+		Assert(k <= (state1->nelements + state2->nelements));
+		Assert((i <= state1->nelements) && (j <= state2->nelements));
+
 		if ((i < state1->nelements) && (j < state2->nelements))
 		{
 			if (state1->elements[i] <= state2->elements[j])
@@ -948,6 +974,9 @@ trimmed_combine_int32(PG_FUNCTION_ARGS)
 			/* no more elements to process */
 			break;
 	}
+
+	Assert(k == (state1->nelements + state2->nelements));
+	Assert((i == state1->nelements) && (j == state2->nelements));
 
 	/* free the two arrays */
 	pfree(state1->elements);
@@ -1014,6 +1043,9 @@ trimmed_combine_int64(PG_FUNCTION_ARGS)
 	i = j = k = 0;
 	while (true)
 	{
+		Assert(k <= (state1->nelements + state2->nelements));
+		Assert((i <= state1->nelements) && (j <= state2->nelements));
+
 		if ((i < state1->nelements) && (j < state2->nelements))
 		{
 			if (state1->elements[i] <= state2->elements[j])
@@ -1029,6 +1061,9 @@ trimmed_combine_int64(PG_FUNCTION_ARGS)
 			/* no more elements to process */
 			break;
 	}
+
+	Assert(k == (state1->nelements + state2->nelements));
+	Assert((i == state1->nelements) && (j == state2->nelements));
 
 	/* free the two arrays */
 	pfree(state1->elements);
@@ -1162,6 +1197,8 @@ trimmed_avg_double(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -1195,6 +1232,8 @@ trimmed_double_array(PG_FUNCTION_ARGS)
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
+
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -1250,6 +1289,8 @@ trimmed_avg_int32(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -1283,6 +1324,8 @@ trimmed_int32_array(PG_FUNCTION_ARGS)
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
+
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -1338,6 +1381,8 @@ trimmed_avg_int64(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -1371,6 +1416,8 @@ trimmed_int64_array(PG_FUNCTION_ARGS)
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
+
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -1426,6 +1473,8 @@ trimmed_avg_numeric(PG_FUNCTION_ARGS)
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -1469,6 +1518,8 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
+
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -1556,6 +1607,8 @@ trimmed_var_double(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -1592,6 +1645,8 @@ trimmed_var_int32(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -1627,6 +1682,8 @@ trimmed_var_int64(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -1661,6 +1718,8 @@ trimmed_var_numeric(PG_FUNCTION_ARGS)
 
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
+
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -1708,6 +1767,8 @@ trimmed_var_pop_double(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -1741,6 +1802,8 @@ trimmed_var_pop_int32(PG_FUNCTION_ARGS)
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
+
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -1776,6 +1839,8 @@ trimmed_var_pop_int64(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -1809,6 +1874,8 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
+
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -1858,6 +1925,8 @@ trimmed_var_samp_double(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -1891,6 +1960,8 @@ trimmed_var_samp_int32(PG_FUNCTION_ARGS)
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
+
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -1926,6 +1997,8 @@ trimmed_var_samp_int64(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -1959,6 +2032,8 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
+
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -2011,6 +2086,8 @@ trimmed_stddev_double(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -2045,6 +2122,8 @@ trimmed_stddev_int32(PG_FUNCTION_ARGS)
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
+
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -2081,6 +2160,8 @@ trimmed_stddev_int64(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -2115,6 +2196,8 @@ trimmed_stddev_numeric(PG_FUNCTION_ARGS)
 
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
+
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -2162,6 +2245,8 @@ trimmed_stddev_pop_double(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -2195,6 +2280,8 @@ trimmed_stddev_pop_int32(PG_FUNCTION_ARGS)
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
+
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -2230,6 +2317,8 @@ trimmed_stddev_pop_int64(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -2263,6 +2352,8 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
+
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -2313,6 +2404,8 @@ trimmed_stddev_samp_double(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -2346,6 +2439,8 @@ trimmed_stddev_samp_int32(PG_FUNCTION_ARGS)
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
+
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -2381,6 +2476,8 @@ trimmed_stddev_samp_int64(PG_FUNCTION_ARGS)
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
+
 	if (from >= to)
 		PG_RETURN_NULL();
 
@@ -2414,6 +2511,8 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 
 	from = floor(state->nelements * state->cut_lower);
 	to   = state->nelements - floor(state->nelements * state->cut_upper);
+
+	Assert((0 <= from) && (from <= to) && (to <= state->nelements));
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -2644,7 +2743,11 @@ build_numeric_elements(state_numeric *state)
 {
 	int		i;
 	char   *tmp = state->data;
-	Numeric *elements = (Numeric*)palloc(state->nelements * sizeof(Numeric));
+	Numeric *elements;
+
+	Assert(state->nelements > 0);
+
+	elements = (Numeric*)palloc(state->nelements * sizeof(Numeric));
 
 	i = 0;
 	while (tmp < state->data + state->usedlen)
@@ -2653,9 +2756,11 @@ build_numeric_elements(state_numeric *state)
 		tmp += VARSIZE(tmp);
 
 		Assert(i <= state->nelements);
+		Assert(tmp <= (state->data + state->usedlen));
 	}
 
 	Assert(i == state->nelements);
+	Assert(tmp == (state->data + state->usedlen));
 
 	return elements;
 }
