@@ -741,8 +741,8 @@ trimmed_deserial_numeric(PG_FUNCTION_ARGS)
 	 * we also need to copy the Numeric contents, but instead of copying
 	 * the values one by one, we copy the chunk of the serialized data
 	 */
-	tmp = palloc(len - sizeof(int));
-	memcpy(tmp, ptr, len - sizeof(int));
+	tmp = palloc(len - offsetof(state_numeric, elements));
+	memcpy(tmp, ptr, len - offsetof(state_numeric, elements));
 	ptr = tmp;
 
 	/* and now just set the pointers in the elements array */
@@ -751,7 +751,7 @@ trimmed_deserial_numeric(PG_FUNCTION_ARGS)
 		out->elements[i] = (Numeric)ptr;
 		ptr += VARSIZE(ptr);
 
-		Assert(ptr <= tmp + (len - sizeof(int)));
+		Assert(ptr <= tmp + (len - offsetof(state_numeric, elements)));
 	}
 
 	PG_RETURN_POINTER(out);
