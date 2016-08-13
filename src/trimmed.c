@@ -283,6 +283,13 @@ trimmed_append_double(PG_FUNCTION_ARGS)
 
 	GET_AGG_CONTEXT("trimmed_append_double", fcinfo, aggcontext);
 
+	/*
+	 * If both arguments are NULL, we can return NULL directly (instead of
+	 * just allocating empty aggregate state even if we don't need it).
+	 */
+	if (PG_ARGISNULL(0) && PG_ARGISNULL(1))
+		PG_RETURN_NULL();
+
 	if (PG_ARGISNULL(0))
 	{
 		MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
@@ -339,6 +346,13 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
 	MemoryContext aggcontext;
 
 	GET_AGG_CONTEXT("trimmed_append_int32", fcinfo, aggcontext);
+
+	/*
+	 * If both arguments are NULL, we can return NULL directly (instead of
+	 * just allocating empty aggregate state even if we don't need it).
+	 */
+	if (PG_ARGISNULL(0) && PG_ARGISNULL(1))
+		PG_RETURN_NULL();
 
 	if (PG_ARGISNULL(0))
 	{
@@ -397,6 +411,13 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
 
 	GET_AGG_CONTEXT("trimmed_append_int64", fcinfo, aggcontext);
 
+	/*
+	 * If both arguments are NULL, we can return NULL directly (instead of
+	 * just allocating empty aggregate state even if we don't need it).
+	 */
+	if (PG_ARGISNULL(0) && PG_ARGISNULL(1))
+		PG_RETURN_NULL();
+
 	if (PG_ARGISNULL(0))
 	{
 		MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
@@ -454,7 +475,10 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 
 	GET_AGG_CONTEXT("trimmed_append_numeric", fcinfo, aggcontext);
 
-	/* if both arguments are NULL, we can return NULL directly */
+	/*
+	 * If both arguments are NULL, we can return NULL directly (instead of
+	 * just allocating empty aggregate state even if we don't need it).
+	 */
 	if (PG_ARGISNULL(0) && PG_ARGISNULL(1))
 		PG_RETURN_NULL();
 
