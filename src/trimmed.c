@@ -1,14 +1,14 @@
 /*
-* trimmed.c - Trimmed aggregate functions
-* Copyright (C) Tomas Vondra, 2011-2016
-*
-*
-* Implementation of trimmed avg/stddev/var aggregates.
-*
-* The memory consumption might be a problem, as all the values are kept in
-* memory - for example 1.000.000 of 8-byte values (bigint) requires about
-* 8MB of memory.
-*/
+ * trimmed.c - Trimmed aggregate functions
+ * Copyright (C) Tomas Vondra, 2011-2016
+ *
+ *
+ * Implementation of trimmed avg/stddev/var aggregates.
+ *
+ * The memory consumption might be a problem, as all the values are kept in
+ * memory - for example 1.000.000 of 8-byte values (bigint) requires about
+ * 8MB of memory.
+ */
 
 #include <stdio.h>
 #include <math.h>
