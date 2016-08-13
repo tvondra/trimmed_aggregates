@@ -1897,10 +1897,13 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 	{
 		Assert(ptr <= (state->data + state->usedlen));
 
-		sum_x = add_numeric(sum_x, (Numeric)ptr);
-		sum_x2 = add_numeric(
-					sum_x2,
-					mul_numeric((Numeric)ptr, (Numeric)ptr));
+		if (i >= from)
+		{
+			sum_x = add_numeric(sum_x, (Numeric)ptr);
+			sum_x2 = add_numeric(
+						sum_x2,
+						mul_numeric((Numeric)ptr, (Numeric)ptr));
+		}
 	}
 
 	/* Watch out for roundoff error producing a negative numerator */
@@ -2069,10 +2072,13 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 	{
 		Assert(ptr <= (state->data + state->usedlen));
 
-		sum_x = add_numeric(sum_x, (Numeric)ptr);
-		sum_x2 = add_numeric(
-						sum_x2,
-						mul_numeric((Numeric)ptr, (Numeric)ptr));
+		if (i >= from)
+		{
+			sum_x = add_numeric(sum_x, (Numeric)ptr);
+			sum_x2 = add_numeric(
+							sum_x2,
+							mul_numeric((Numeric)ptr, (Numeric)ptr));
+		}
 	}
 
 	/* Watch out for roundoff error producing a negative numerator */
@@ -2410,9 +2416,12 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 	{
 		Assert(ptr <= (state->data + state->usedlen));
 
-		sum_x = add_numeric(sum_x, (Numeric)ptr);
-		sum_x2 = add_numeric(sum_x2,
-							 mul_numeric((Numeric)ptr, (Numeric)ptr));
+		if (i >= from)
+		{
+			sum_x = add_numeric(sum_x, (Numeric)ptr);
+			sum_x2 = add_numeric(sum_x2,
+								 mul_numeric((Numeric)ptr, (Numeric)ptr));
+		}
 	}
 
 	/* Watch out for roundoff error producing a negative numerator */
@@ -2582,8 +2591,11 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 	{
 		Assert(ptr <= (state->data + state->usedlen));
 
-		sum_x = add_numeric(sum_x, (Numeric)ptr);
-		sum_x2 = add_numeric(sum_x2, pow_numeric((Numeric)ptr, 2));
+		if (i >= from)
+		{
+			sum_x = add_numeric(sum_x, (Numeric)ptr);
+			sum_x2 = add_numeric(sum_x2, pow_numeric((Numeric)ptr, 2));
+		}
 	}
 
 	/* Watch out for roundoff error producing a negative numerator */
