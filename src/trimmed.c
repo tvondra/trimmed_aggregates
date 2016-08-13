@@ -544,17 +544,13 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 Datum
 trimmed_serial_double(PG_FUNCTION_ARGS)
 {
-	state_double  *data = (state_double *)PG_GETARG_POINTER(0);
+	state_double   *data = (state_double *)PG_GETARG_POINTER(0);
 	Size			hlen = offsetof(state_double, elements);	/* header */
-	Size			len = data->nelements * sizeof(double);			/* elements */
+	Size			len = data->nelements * sizeof(double);		/* elements */
 	bytea		   *out = (bytea *)palloc(VARHDRSZ + len + hlen);
 	char		   *ptr;
 
 	CHECK_AGG_CONTEXT("trimmed_serial_double", fcinfo);
-
-	SET_VARSIZE(out, VARHDRSZ + len + hlen);
-
-	ptr = VARDATA(out);
 
 	/* we want to serialize the data in sorted format */
 	if (! data->sorted)
@@ -562,6 +558,9 @@ trimmed_serial_double(PG_FUNCTION_ARGS)
 		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 		data->sorted = true;
 	}
+
+	SET_VARSIZE(out, VARHDRSZ + len + hlen);
+	ptr = VARDATA(out);
 
 	memcpy(ptr, data, offsetof(state_double, elements));
 	ptr += offsetof(state_double, elements);
@@ -574,17 +573,13 @@ trimmed_serial_double(PG_FUNCTION_ARGS)
 Datum
 trimmed_serial_int32(PG_FUNCTION_ARGS)
 {
-	state_int32   *data = (state_int32 *)PG_GETARG_POINTER(0);
-	Size			hlen = offsetof(state_int32, elements);	/* header */
-	Size			len = data->nelements * sizeof(int32);			/* elements */
+	state_int32	   *data = (state_int32 *)PG_GETARG_POINTER(0);
+	Size			hlen = offsetof(state_int32, elements);		/* header */
+	Size			len = data->nelements * sizeof(int32);		/* elements */
 	bytea		   *out = (bytea *)palloc(VARHDRSZ + len + hlen);
 	char		   *ptr;
 
 	CHECK_AGG_CONTEXT("trimmed_serial_int32", fcinfo);
-
-	SET_VARSIZE(out, VARHDRSZ + len + hlen);
-
-	ptr = VARDATA(out);
 
 	/* we want to serialize the data in sorted format */
 	if (! data->sorted)
@@ -592,6 +587,9 @@ trimmed_serial_int32(PG_FUNCTION_ARGS)
 		pg_qsort(data->elements, data->nelements, sizeof(double), &int32_comparator);
 		data->sorted = true;
 	}
+
+	SET_VARSIZE(out, VARHDRSZ + len + hlen);
+	ptr = VARDATA(out);
 
 	memcpy(ptr, data, offsetof(state_int32, elements));
 	ptr += offsetof(state_int32, elements);
@@ -604,17 +602,13 @@ trimmed_serial_int32(PG_FUNCTION_ARGS)
 Datum
 trimmed_serial_int64(PG_FUNCTION_ARGS)
 {
-	state_int64  *data = (state_int64 *)PG_GETARG_POINTER(0);
-	Size			hlen = offsetof(state_int64, elements);	/* header */
-	Size			len = data->nelements * sizeof(int64);			/* elements */
+	state_int64	   *data = (state_int64 *)PG_GETARG_POINTER(0);
+	Size			hlen = offsetof(state_int64, elements);		/* header */
+	Size			len = data->nelements * sizeof(int64);		/* elements */
 	bytea		   *out = (bytea *)palloc(VARHDRSZ + len + hlen);
 	char		   *ptr;
 
 	CHECK_AGG_CONTEXT("trimmed_serial_int64", fcinfo);
-
-	SET_VARSIZE(out, VARHDRSZ + len + hlen);
-
-	ptr = VARDATA(out);
 
 	/* we want to serialize the data in sorted format */
 	if (! data->sorted)
@@ -622,6 +616,9 @@ trimmed_serial_int64(PG_FUNCTION_ARGS)
 		pg_qsort(data->elements, data->nelements, sizeof(double), &int64_comparator);
 		data->sorted = true;
 	}
+
+	SET_VARSIZE(out, VARHDRSZ + len + hlen);
+	ptr = VARDATA(out);
 
 	memcpy(ptr, data, offsetof(state_int64, elements));
 	ptr += offsetof(state_int64, elements);
@@ -644,7 +641,6 @@ trimmed_serial_numeric(PG_FUNCTION_ARGS)
 
 	out = (bytea *)palloc(VARHDRSZ + len + hlen);
 	SET_VARSIZE(out, VARHDRSZ + len + hlen);
-
 	ptr = (char*) VARDATA(out);
 
 	if (! data->sorted)	/* not sorted yet */
