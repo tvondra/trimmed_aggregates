@@ -724,6 +724,7 @@ trimmed_deserial_double(PG_FUNCTION_ARGS)
 
 	Assert((out->nelements > 0) && (out->maxelements >= out->nelements));
 	Assert(len == offsetof(state_double, elements) + out->nelements * sizeof(double));
+	Assert(out->sorted);
 
 	/* we only allocate the necessary space */
 	out->elements = (double *)palloc(out->nelements * sizeof(double));
@@ -753,6 +754,7 @@ trimmed_deserial_int32(PG_FUNCTION_ARGS)
 
 	Assert((out->nelements > 0) && (out->maxelements >= out->nelements));
 	Assert(len == offsetof(state_int32, elements) + out->nelements * sizeof(int32));
+	Assert(out->sorted);
 
 	/* we only allocate the necessary space */
 	out->elements = (int32 *)palloc(out->nelements * sizeof(int32));
@@ -782,6 +784,7 @@ trimmed_deserial_int64(PG_FUNCTION_ARGS)
 
 	Assert((out->nelements > 0) && (out->maxelements >= out->nelements));
 	Assert(len == offsetof(state_int64, elements) + out->nelements * sizeof(int64));
+	Assert(out->sorted);
 
 	/* we only allocate the necessary space */
 	out->elements = (int64 *)palloc(out->nelements * sizeof(int64));
@@ -812,6 +815,7 @@ trimmed_deserial_numeric(PG_FUNCTION_ARGS)
 	Assert((out->nelements > 0) && (out->usedlen > 0));
 	Assert(out->usedlen <= out->maxlen);
 	Assert(out->usedlen == (len - offsetof(state_numeric, data)));
+	Assert(out->sorted);
 
 	/* fist copy the Numeric values into the buffer */
 	out->data = palloc(len - offsetof(state_numeric, data));
