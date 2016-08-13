@@ -54,6 +54,8 @@ typedef struct state_double
 	double	cut_lower;		/* fraction to cut at the lower end */
 	double	cut_upper;		/* fraction to cut at the upper end */
 
+	bool	sorted;			/* are the elements sorted */
+
 	double *elements;		/* array of values */
 } state_double;
 
@@ -65,6 +67,8 @@ typedef struct state_int32
 	double	cut_lower;		/* fraction to cut at the lower end */
 	double	cut_upper;		/* fraction to cut at the upper end */
 
+	bool	sorted;			/* are the elements sorted */
+
 	int32  *elements;		/* array of values */
 } state_int32;
 
@@ -75,6 +79,8 @@ typedef struct state_int64
 
 	double	cut_lower;		/* fraction to cut at the lower end */
 	double	cut_upper;		/* fraction to cut at the upper end */
+
+	bool	sorted;			/* are the elements sorted */
 
 	int64  *elements;		/* array of values */
 } state_int64;
@@ -283,6 +289,7 @@ trimmed_append_double(PG_FUNCTION_ARGS)
 
 		data->maxelements = MIN_ELEMENTS;
 		data->nelements = 0;
+		data->sorted = false;
 
 		/* how much to cut */
 		if (PG_ARGISNULL(2) || PG_ARGISNULL(3))
@@ -339,6 +346,7 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
 
 		data->maxelements = MIN_ELEMENTS;
 		data->nelements = 0;
+		data->sorted = false;
 
 		/* how much to cut */
 		if (PG_ARGISNULL(2) || PG_ARGISNULL(3))
@@ -395,6 +403,7 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
 
 		data->maxelements = MIN_ELEMENTS;
 		data->nelements = 0;
+		data->sorted = false;
 
 		/* how much to cut */
 		if (PG_ARGISNULL(2) || PG_ARGISNULL(3))
@@ -509,6 +518,13 @@ trimmed_serial_double(PG_FUNCTION_ARGS)
 
 	ptr = VARDATA(out);
 
+	/* we want to serialize the data in sorted format */
+	if (! data->sorted)
+	{
+		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+		data->sorted = true;
+	}
+
 	memcpy(ptr, data, offsetof(state_double, elements));
 	ptr += offsetof(state_double, elements);
 
@@ -532,6 +548,13 @@ trimmed_serial_int32(PG_FUNCTION_ARGS)
 
 	ptr = VARDATA(out);
 
+	/* we want to serialize the data in sorted format */
+	if (! data->sorted)
+	{
+		pg_qsort(data->elements, data->nelements, sizeof(double), &int32_comparator);
+		data->sorted = true;
+	}
+
 	memcpy(ptr, data, offsetof(state_int32, elements));
 	ptr += offsetof(state_int32, elements);
 
@@ -554,6 +577,13 @@ trimmed_serial_int64(PG_FUNCTION_ARGS)
 	SET_VARSIZE(out, VARHDRSZ + len + hlen);
 
 	ptr = VARDATA(out);
+
+	/* we want to serialize the data in sorted format */
+	if (! data->sorted)
+	{
+		pg_qsort(data->elements, data->nelements, sizeof(double), &int64_comparator);
+		data->sorted = true;
+	}
 
 	memcpy(ptr, data, offsetof(state_int64, elements));
 	ptr += offsetof(state_int64, elements);
@@ -730,6 +760,8 @@ trimmed_deserial_numeric(PG_FUNCTION_ARGS)
 Datum
 trimmed_combine_double(PG_FUNCTION_ARGS)
 {
+	int i, j, k;
+	double *tmp;
 	state_double *data1;
 	state_double *data2;
 	MemoryContext agg_context;
@@ -753,6 +785,7 @@ trimmed_combine_double(PG_FUNCTION_ARGS)
 
 		data1->cut_lower = data2->cut_lower;
 		data1->cut_upper = data2->cut_upper;
+		data1->sorted = data2->sorted;
 
 		data1->elements = (double*)palloc(sizeof(double) * data2->maxelements);
 
@@ -768,22 +801,40 @@ trimmed_combine_double(PG_FUNCTION_ARGS)
 	}
 
 	Assert((data1 != NULL) && (data2 != NULL));
+	Assert(data1->sorted && data2->sorted);
 
-	/* if there's not enough space in data1, enlarge it */
-	if (data1->nelements + data2->nelements >= data1->maxelements)
+	tmp = (double*)MemoryContextAlloc(agg_context,
+					  sizeof(double) * (data1->nelements + data2->nelements));
+
+	/* merge the two arrays */
+	i = j = k = 0;
+	while (true)
 	{
-		/* we size the array to match the size exactly */
-		data1->maxelements = data1->nelements + data2->nelements;
-		data1->elements = (double *)repalloc(data1->elements,
-											 data1->maxelements * sizeof(double));
+		if ((i < data1->nelements) && (j < data2->nelements))
+		{
+			if (data1->elements[i] <= data2->elements[j])
+				tmp[k++] = data1->elements[i++];
+			else
+				tmp[k++] = data2->elements[j++];
+		}
+		else if (i < data1->nelements)
+			tmp[k++] = data1->elements[i++];
+		else if (j < data2->nelements)
+			tmp[k++] = data2->elements[j++];
+		else
+			/* no more elements to process */
+			break;
 	}
 
-	/* copy the elements from data2 into data1 */
-	memcpy(data1->elements + data1->nelements, data2->elements,
-		   data2->nelements * sizeof(double));
+	/* free the two arrays */
+	pfree(data1->elements);
+	pfree(data2->elements);
+
+	data1->elements = tmp;
 
 	/* and finally remember the current number of elements */
 	data1->nelements += data2->nelements;
+	data1->maxelements = data1->nelements;
 
 	PG_RETURN_POINTER(data1);
 }
@@ -791,6 +842,8 @@ trimmed_combine_double(PG_FUNCTION_ARGS)
 Datum
 trimmed_combine_int32(PG_FUNCTION_ARGS)
 {
+	int i, j, k;
+	int32 *tmp;
 	state_int32 *data1;
 	state_int32 *data2;
 	MemoryContext agg_context;
@@ -829,22 +882,40 @@ trimmed_combine_int32(PG_FUNCTION_ARGS)
 	}
 
 	Assert((data1 != NULL) && (data2 != NULL));
+	Assert(data1->sorted && data2->sorted);
 
-	/* if there's not enough space in data1, enlarge it */
-	if (data1->nelements + data2->nelements >= data1->maxelements)
+	tmp = (int32*)MemoryContextAlloc(agg_context,
+					  sizeof(int32) * (data1->nelements + data2->nelements));
+
+	/* merge the two arrays */
+	i = j = k = 0;
+	while (true)
 	{
-		/* we size the array to match the size exactly */
-		data1->maxelements = data1->nelements + data2->nelements;
-		data1->elements = (int32 *)repalloc(data1->elements,
-											 data1->maxelements * sizeof(int32));
+		if ((i < data1->nelements) && (j < data2->nelements))
+		{
+			if (data1->elements[i] <= data2->elements[j])
+				tmp[k++] = data1->elements[i++];
+			else
+				tmp[k++] = data2->elements[j++];
+		}
+		else if (i < data1->nelements)
+			tmp[k++] = data1->elements[i++];
+		else if (j < data2->nelements)
+			tmp[k++] = data2->elements[j++];
+		else
+			/* no more elements to process */
+			break;
 	}
 
-	/* copy the elements from data2 into data1 */
-	memcpy(data1->elements + data1->nelements, data2->elements,
-		   data2->nelements * sizeof(int32));
+	/* free the two arrays */
+	pfree(data1->elements);
+	pfree(data2->elements);
+
+	data1->elements = tmp;
 
 	/* and finally remember the current number of elements */
 	data1->nelements += data2->nelements;
+	data1->maxelements = data1->nelements;
 
 	PG_RETURN_POINTER(data1);
 }
@@ -852,6 +923,8 @@ trimmed_combine_int32(PG_FUNCTION_ARGS)
 Datum
 trimmed_combine_int64(PG_FUNCTION_ARGS)
 {
+	int i, j, k;
+	int64 *tmp;
 	state_int64 *data1;
 	state_int64 *data2;
 	MemoryContext agg_context;
@@ -882,24 +955,48 @@ trimmed_combine_int64(PG_FUNCTION_ARGS)
 
 		MemoryContextSwitchTo(old_context);
 
+		/* free the internal state */
+		pfree(data2->elements);
+		data2->elements = NULL;
+
 		PG_RETURN_POINTER(data1);
 	}
 
-	/* if there's not enough space in data1, enlarge it */
-	if (data1->nelements + data2->nelements >= data1->maxelements)
+	Assert((data1 != NULL) && (data2 != NULL));
+	Assert(data1->sorted && data2->sorted);
+
+	tmp = (int64*)MemoryContextAlloc(agg_context,
+					  sizeof(int64) * (data1->nelements + data2->nelements));
+
+	/* merge the two arrays */
+	i = j = k = 0;
+	while (true)
 	{
-		/* we size the array to match the size exactly */
-		data1->maxelements = data1->nelements + data2->nelements;
-		data1->elements = (int64 *)repalloc(data1->elements,
-											 data1->maxelements * sizeof(int64));
+		if ((i < data1->nelements) && (j < data2->nelements))
+		{
+			if (data1->elements[i] <= data2->elements[j])
+				tmp[k++] = data1->elements[i++];
+			else
+				tmp[k++] = data2->elements[j++];
+		}
+		else if (i < data1->nelements)
+			tmp[k++] = data1->elements[i++];
+		else if (j < data2->nelements)
+			tmp[k++] = data2->elements[j++];
+		else
+			/* no more elements to process */
+			break;
 	}
 
-	/* copy the elements from data2 into data1 */
-	memcpy(data1->elements + data1->nelements, data2->elements,
-		   data2->nelements * sizeof(int64));
+	/* free the two arrays */
+	pfree(data1->elements);
+	pfree(data2->elements);
+
+	data1->elements = tmp;
 
 	/* and finally remember the current number of elements */
 	data1->nelements += data2->nelements;
+	data1->maxelements = data1->nelements;
 
 	PG_RETURN_POINTER(data1);
 }
@@ -1014,7 +1111,8 @@ trimmed_avg_double(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 		result = result + data->elements[i];
@@ -1047,7 +1145,8 @@ trimmed_double_array(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	/* average */
 	result[0] = 0;
@@ -1100,7 +1199,8 @@ trimmed_avg_int32(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 		result = result + (double)data->elements[i];
@@ -1133,7 +1233,8 @@ trimmed_int32_array(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	/* average */
 	result[0] = 0;
@@ -1186,7 +1287,8 @@ trimmed_avg_int64(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 		result = result + (double)data->elements[i];
@@ -1219,7 +1321,8 @@ trimmed_int64_array(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	/* average */
 	result[0] = 0;
@@ -1388,7 +1491,8 @@ trimmed_var_double(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 		avg = avg + data->elements[i];
@@ -1423,7 +1527,8 @@ trimmed_var_int32(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 		avg = avg + (double)data->elements[i];
@@ -1457,7 +1562,8 @@ trimmed_var_int64(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 		avg = avg + (double)data->elements[i];
@@ -1564,7 +1670,8 @@ trimmed_var_pop_int32(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1597,7 +1704,8 @@ trimmed_var_pop_int64(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1672,7 +1780,8 @@ trimmed_var_samp_double(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1705,7 +1814,8 @@ trimmed_var_samp_int32(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1738,7 +1848,8 @@ trimmed_var_samp_int64(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1816,7 +1927,8 @@ trimmed_stddev_double(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 		avg = avg + data->elements[i];
@@ -1850,7 +1962,8 @@ trimmed_stddev_int32(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 		avg = avg + (double)data->elements[i];
@@ -1884,7 +1997,8 @@ trimmed_stddev_int64(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 		avg = avg + (double)data->elements[i];
@@ -1958,7 +2072,8 @@ trimmed_stddev_pop_double(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1991,7 +2106,8 @@ trimmed_stddev_pop_int32(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -2024,7 +2140,8 @@ trimmed_stddev_pop_int64(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -2100,7 +2217,8 @@ trimmed_stddev_samp_double(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -2133,7 +2251,8 @@ trimmed_stddev_samp_int32(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -2166,7 +2285,8 @@ trimmed_stddev_samp_int64(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! data->sorted)
+		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 	{
