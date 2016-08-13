@@ -1014,7 +1014,7 @@ trimmed_avg_double(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 		result = result + data->elements[i];
@@ -1047,7 +1047,7 @@ trimmed_double_array(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	/* average */
 	result[0] = 0;
@@ -1100,7 +1100,7 @@ trimmed_avg_int32(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 		result = result + (double)data->elements[i];
@@ -1133,7 +1133,7 @@ trimmed_int32_array(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	/* average */
 	result[0] = 0;
@@ -1186,7 +1186,7 @@ trimmed_avg_int64(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 		result = result + (double)data->elements[i];
@@ -1219,7 +1219,7 @@ trimmed_int64_array(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	/* average */
 	result[0] = 0;
@@ -1275,7 +1275,7 @@ trimmed_avg_numeric(PG_FUNCTION_ARGS)
 	cnt	= create_numeric(to-from);
 	result = create_numeric(0);
 
-	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 		result = add_numeric(result, div_numeric(data->elements[i], cnt));
@@ -1312,7 +1312,7 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 	cntNumeric = create_numeric(to-from);
 	cntNumeric_1 = create_numeric(to-from-1);
 
-	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	/* average */
 	result[0] = create_numeric(0);
@@ -1388,7 +1388,7 @@ trimmed_var_double(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 		avg = avg + data->elements[i];
@@ -1423,7 +1423,7 @@ trimmed_var_int32(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 		avg = avg + (double)data->elements[i];
@@ -1457,7 +1457,7 @@ trimmed_var_int64(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 		avg = avg + (double)data->elements[i];
@@ -1494,7 +1494,7 @@ trimmed_var_numeric(PG_FUNCTION_ARGS)
 	avg = create_numeric(0);
 	result = create_numeric(0);
 
-	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 		avg = add_numeric(avg, div_numeric(data->elements[i], cnt));
@@ -1531,7 +1531,7 @@ trimmed_var_pop_double(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1564,7 +1564,7 @@ trimmed_var_pop_int32(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1597,7 +1597,7 @@ trimmed_var_pop_int64(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1633,7 +1633,7 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 	sum_x = create_numeric(0);
 	sum_x2 = create_numeric(0);
 
-	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1672,7 +1672,7 @@ trimmed_var_samp_double(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1705,7 +1705,7 @@ trimmed_var_samp_int32(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1738,7 +1738,7 @@ trimmed_var_samp_int64(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1774,7 +1774,7 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 	sum_x = create_numeric(0);
 	sum_x2 = create_numeric(0);
 
-	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1816,7 +1816,7 @@ trimmed_stddev_double(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 		avg = avg + data->elements[i];
@@ -1850,7 +1850,7 @@ trimmed_stddev_int32(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 		avg = avg + (double)data->elements[i];
@@ -1884,7 +1884,7 @@ trimmed_stddev_int64(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 		avg = avg + (double)data->elements[i];
@@ -1921,7 +1921,7 @@ trimmed_stddev_numeric(PG_FUNCTION_ARGS)
 	avg = create_numeric(0);
 	result = create_numeric(0);
 
-	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 		avg = add_numeric(avg, div_numeric(data->elements[i], cnt));
@@ -1958,7 +1958,7 @@ trimmed_stddev_pop_double(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1991,7 +1991,7 @@ trimmed_stddev_pop_int32(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -2024,7 +2024,7 @@ trimmed_stddev_pop_int64(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -2060,7 +2060,7 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 	sum_x = create_numeric(0);
 	sum_x2 = create_numeric(0);
 
-	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -2100,7 +2100,7 @@ trimmed_stddev_samp_double(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -2133,7 +2133,7 @@ trimmed_stddev_samp_int32(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -2166,7 +2166,7 @@ trimmed_stddev_samp_int64(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -2202,7 +2202,7 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 	sum_x = create_numeric(0);
 	sum_x2 = create_numeric(0);
 
-	qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 	{
