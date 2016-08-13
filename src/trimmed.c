@@ -87,13 +87,17 @@ typedef struct state_int64
 
 typedef struct state_numeric
 {
-	int		maxelements;	/* size of elements array */
-	int		nelements;		/* number of used items */
+	int		nelements;		/* number of stored items */
 
 	double	cut_lower;		/* fraction to cut at the lower end */
 	double	cut_upper;		/* fraction to cut at the upper end */
 
-	Numeric *elements;		/* array of values */
+	bool	sorted;			/* are the elements sorted */
+
+	int		maxlen;			/* total size of the buffer */
+	int		usedlen;		/* used part of the buffer */
+
+	char    *data;			/* contents of the numeric values */
 } state_numeric;
 
 /* comparators, used for qsort */
@@ -108,6 +112,9 @@ double_to_array(FunctionCallInfo fcinfo, double * d, int len);
 
 static Datum
 numeric_to_array(FunctionCallInfo fcinfo, Numeric * d, int len);
+
+static Numeric *
+build_numeric_elements(state_numeric *state);
 
 /* ACCUMULATE DATA */
 
@@ -449,17 +456,19 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 
 	GET_AGG_CONTEXT("trimmed_append_numeric", fcinfo, aggcontext);
 
+	/* if both arguments are NULL, we can return NULL directly */
+	if (PG_ARGISNULL(0) && PG_ARGISNULL(1))
+		PG_RETURN_NULL();
+
 	if (PG_ARGISNULL(0))
 	{
-		MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
+		data = (state_numeric*)MemoryContextAlloc(aggcontext,
+												  sizeof(state_numeric));
 
-		data = (state_numeric*)palloc(sizeof(state_numeric));
-		data->elements = (Numeric*)palloc(MIN_ELEMENTS * sizeof(Numeric));
-
-		MemoryContextSwitchTo(oldcontext);
-
-		data->maxelements = MIN_ELEMENTS;
 		data->nelements = 0;
+		data->data = NULL;
+		data->usedlen = 0;
+		data->maxlen = 32;	/* TODO make this a constant */
 
 		/* how much to cut */
 		if (PG_ARGISNULL(2) || PG_ARGISNULL(3))
@@ -482,22 +491,29 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 
 	if (! PG_ARGISNULL(1))
 	{
-		MemoryContext oldcontext;
 		Numeric element = PG_GETARG_NUMERIC(1);
 
-		if (data->nelements >= data->maxelements)
+		int len = VARSIZE(element);
+
+		/* if there's not enough space in the data buffer, repalloc it */
+		if (data->usedlen + len > data->maxlen)
 		{
-			data->maxelements *= 2;
-			data->elements = (Numeric*)repalloc(data->elements,
-												sizeof(Numeric) * data->maxelements);
+			while (len + data->usedlen > data->maxlen)
+				data->maxlen *= 2;
+
+			if (data->data != NULL)
+				data->data = repalloc(data->data, data->maxlen);
 		}
 
-		oldcontext = MemoryContextSwitchTo(aggcontext);
+		/* if first entry, we need to allocate the buffer */
+		if (! data->data)
+			data->data = MemoryContextAlloc(aggcontext, data->maxlen);
 
-		data->elements[data->nelements++]
-			= DatumGetNumeric(datumCopy(NumericGetDatum(element), false, -1));
+		/* copy the contents of the Numeric in place */
+		memcpy(data->data + data->usedlen, element, len);
 
-		MemoryContextSwitchTo(oldcontext);
+		data->usedlen += len;
+		data->nelements += 1;
 	}
 
 	PG_RETURN_POINTER(data);
@@ -596,33 +612,59 @@ trimmed_serial_int64(PG_FUNCTION_ARGS)
 Datum
 trimmed_serial_numeric(PG_FUNCTION_ARGS)
 {
-	int				i;
-	Size			hlen = offsetof(state_numeric, elements);	/* header */
-	Size			len;										/* elements */
 	state_numeric *data = (state_numeric *)PG_GETARG_POINTER(0);
-	bytea		   *out;
-	char		   *ptr;
+	Size	hlen = offsetof(state_numeric, data);		/* header */
+	Size	len = data->usedlen;						/* elements */
+	bytea  *out;
+	char   *ptr;
 
 	CHECK_AGG_CONTEXT("trimmed_serial_numeric", fcinfo);
-
-	/* sum sizes of all Numeric values to get the required size */
-	len = 0;
-	for (i = 0; i < data->nelements; i++)
-		len += VARSIZE(data->elements[i]);
 
 	out = (bytea *)palloc(VARHDRSZ + len + hlen);
 	SET_VARSIZE(out, VARHDRSZ + len + hlen);
 
 	ptr = (char*) VARDATA(out);
 
-	memcpy(ptr, data, offsetof(state_numeric, elements));
-	ptr += offsetof(state_numeric, elements);
-
-	/* now copy the contents of each Numeric value into the buffer */
-	for (i = 0; i < data->nelements; i++)
+	if (! data->sorted)	/* not sorted yet */
 	{
-		memcpy(ptr, data->elements[i], VARSIZE(data->elements[i]));
-		ptr += VARSIZE(data->elements[i]);
+		int		i;
+		char   *tmp = data->data;
+		Numeric *items = (Numeric*)palloc(sizeof(Numeric) * data->nelements);
+
+		i = 0;
+		while (tmp < data->data + data->usedlen)
+		{
+			items[i++] = (Numeric)tmp;
+			tmp += VARSIZE(tmp);
+		}
+
+		Assert(i == data->nelements);
+
+		pg_qsort(items, data->nelements, sizeof(Numeric), &numeric_comparator);
+
+		data->sorted = true;
+
+		memcpy(ptr, data, offsetof(state_numeric, data));
+		ptr += offsetof(state_numeric, data);
+
+		data->sorted = false; /* reset the state back (not sorting in-place) */
+
+		/* copy the values in place */
+		for (i = 0; i < data->nelements; i++)
+		{
+			memcpy(ptr, items[i], VARSIZE(items[i]));
+			ptr += VARSIZE(items[i]);
+		}
+
+		pfree(items);
+	}
+	else	/* already sorted, copy as a chunk at once */
+	{
+		memcpy(ptr, data, offsetof(state_numeric, data));
+		ptr += offsetof(state_numeric, data);
+
+		memcpy(ptr, data->data, data->usedlen);
+		ptr += data->usedlen;
 	}
 
 	/* we better get exactly the expected amount of data */
@@ -718,41 +760,22 @@ trimmed_deserial_int64(PG_FUNCTION_ARGS)
 Datum
 trimmed_deserial_numeric(PG_FUNCTION_ARGS)
 {
-	int		i;
 	state_numeric *out = (state_numeric *)palloc(sizeof(state_numeric));
 	bytea  *data = (bytea *)PG_GETARG_POINTER(0);
 	Size	len = VARSIZE_ANY_EXHDR(data);
 	char   *ptr = VARDATA(data);
-	char   *tmp;
 
 	CHECK_AGG_CONTEXT("trimmed_deserial_numeric", fcinfo);
 
 	Assert(len > 0);
 
 	/* first read the struct header, stored at the beginning */
-	memcpy(out, ptr, offsetof(state_numeric, elements));
-	ptr += offsetof(state_numeric, elements);
+	memcpy(out, ptr, offsetof(state_numeric, data));
+	ptr += offsetof(state_numeric, data);
 
-	/* allocate an array with enough space for the Numeric pointers */
-	out->maxelements = out->nelements; /* no slack space for new data */
-	out->elements = (Numeric *)palloc(out->nelements * sizeof(Numeric));
-
-	/*
-	 * we also need to copy the Numeric contents, but instead of copying
-	 * the values one by one, we copy the chunk of the serialized data
-	 */
-	tmp = palloc(len - offsetof(state_numeric, elements));
-	memcpy(tmp, ptr, len - offsetof(state_numeric, elements));
-	ptr = tmp;
-
-	/* and now just set the pointers in the elements array */
-	for (i = 0; i < out->nelements; i++)
-	{
-		out->elements[i] = (Numeric)ptr;
-		ptr += VARSIZE(ptr);
-
-		Assert(ptr <= tmp + (len - offsetof(state_numeric, elements)));
-	}
+	/* fist copy the Numeric values into the buffer */
+	out->data = palloc(len - offsetof(state_numeric, data));
+	memcpy(out->data, ptr, len - offsetof(state_numeric, data));
 
 	PG_RETURN_POINTER(out);
 }
@@ -1004,13 +1027,12 @@ trimmed_combine_int64(PG_FUNCTION_ARGS)
 Datum
 trimmed_combine_numeric(PG_FUNCTION_ARGS)
 {
-	Size			len;
 	int				i;
 	state_numeric *data1;
 	state_numeric *data2;
 	MemoryContext agg_context;
-	MemoryContext old_context;
-	char		   *tmp;
+
+	char		   *data, *tmp, *ptr1, *ptr2;
 
 	GET_AGG_CONTEXT("trimmed_combine_numeric", fcinfo, agg_context);
 
@@ -1022,69 +1044,82 @@ trimmed_combine_numeric(PG_FUNCTION_ARGS)
 
 	if (data1 == NULL)
 	{
-		old_context = MemoryContextSwitchTo(agg_context);
+		data1 = (state_numeric *)MemoryContextAlloc(agg_context,
+													sizeof(state_numeric));
 
-		data1 = (state_numeric *)palloc(sizeof(state_numeric));
-		data1->maxelements = data2->maxelements;
-		data1->nelements = 0;
-
+		data1->nelements = data2->nelements;
 		data1->cut_lower = data2->cut_lower;
 		data1->cut_upper = data2->cut_upper;
+		data1->usedlen = data2->usedlen;
+		data1->maxlen = data2->maxlen;
 
-		data1->elements = (Numeric*)palloc(sizeof(Numeric) * data2->maxelements);
-
-		len = 0;
-		for (i = 0; i < data2->nelements; i++)
-			len += VARSIZE(data2->elements[i]);
-
-		tmp = palloc(len);
-
-		for (i = 0; i < data2->nelements; i++)
-		{
-			memcpy(tmp, data2->elements[i], VARSIZE(data2->elements[i]));
-			data1->elements[data1->nelements++] = (Numeric)tmp;
-			tmp += VARSIZE(data2->elements[i]);
-		}
-
-		MemoryContextSwitchTo(old_context);
-
-		/* free the internal state */
-		pfree(data2->elements);
-		data2->elements = NULL;
+		/* copy the buffer */
+		data1->data = MemoryContextAlloc(agg_context, data1->usedlen);
+		memcpy(data1->data, data2->data, data1->usedlen);
 
 		PG_RETURN_POINTER(data1);
 	}
 
-	/* if there's not enough space in data1, enlarge it */
-	if (data1->nelements + data2->nelements >= data1->maxelements)
+	/* allocate temporary arrays */
+	data = MemoryContextAlloc(agg_context, data1->usedlen + data2->usedlen);
+	tmp = data;
+
+	/* merge the two arrays */
+	ptr1 = data1->data;
+	ptr2 = data2->data;
+
+	for (i = 0; i < data1->nelements + data2->nelements; i++)
 	{
-		/* we size the array to match the size exactly */
-		data1->maxelements = data1->nelements + data2->nelements;
-		data1->elements = (Numeric *)repalloc(data1->elements,
-											  data1->maxelements * sizeof(Numeric));
+		Numeric element;
+
+		Assert(ptr1 <= (data1->data + data1->usedlen));
+		Assert(ptr2 <= (data2->data + data2->usedlen));
+
+		if ((ptr1 < (data1->data + data1->usedlen)) &&
+			(ptr2 < (data2->data + data2->usedlen)))
+		{
+			if (numeric_comparator(&ptr1, &ptr2) <= 0)
+			{
+				element = (Numeric)ptr1;
+				ptr1 += VARSIZE(ptr1);
+			}
+			else
+			{
+				element = (Numeric)ptr2;
+				ptr2 += VARSIZE(ptr2);
+			}
+		}
+		else if (ptr1 < (data1->data + data1->usedlen))
+		{
+			element = (Numeric)ptr1;
+			ptr1 += VARSIZE(ptr1);
+		}
+		else if (ptr2 < (data2->data + data2->usedlen))
+		{
+			element = (Numeric)ptr2;
+			ptr2 += VARSIZE(ptr2);
+		}
+		else
+			elog(ERROR, "unexpected");
+
+		/* actually copy the value */
+		memcpy(tmp, element, VARSIZE(element));
+		tmp += VARSIZE(element);
 	}
 
-	/*
-	 * we can't copy just the pointers - we need to copy the contents of the
-	 * Numeric datums too - to save space, we'll copy them into a single buffer
-	 * and use the pointers
-	 */
-	len = 0;
-	for (i = 0; i < data2->nelements; i++)
-		len += VARSIZE(data2->elements[i]);
+	Assert(ptr1 == (data1->data + data1->usedlen));
+	Assert(ptr2 == (data2->data + data2->usedlen));
+	Assert((tmp - data) == (data1->usedlen + data2->usedlen));
 
-	old_context = MemoryContextSwitchTo(agg_context);
-	tmp = palloc(len);
-	MemoryContextSwitchTo(old_context);
+	/* free the two arrays */
+	pfree(data1->data);
+	pfree(data2->data);
 
-	for (i = 0; i < data2->nelements; i++)
-	{
-		memcpy(tmp, data2->elements[i], VARSIZE(data2->elements[i]));
-		data1->elements[data1->nelements++] = (Numeric)tmp;
-		tmp += VARSIZE(data2->elements[i]);
-	}
+	data1->data = data;
 
-	Assert(data1->nelements == data1->maxelements);
+	/* and finally remember the current number of elements */
+	data1->nelements += data2->nelements;
+	data1->usedlen += data2->usedlen;
 
 	PG_RETURN_POINTER(data1);
 }
@@ -1358,6 +1393,7 @@ trimmed_avg_numeric(PG_FUNCTION_ARGS)
 {
 	int		i, from, to;
 	Numeric	result, cnt;
+	Numeric *elements;
 
 	state_numeric *data;
 
@@ -1378,10 +1414,16 @@ trimmed_avg_numeric(PG_FUNCTION_ARGS)
 	cnt	= create_numeric(to-from);
 	result = create_numeric(0);
 
-	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	elements = build_numeric_elements(data);
+
+	if (! data->sorted)
+		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
-		result = add_numeric(result, div_numeric(data->elements[i], cnt));
+		result = add_numeric(result, div_numeric(elements[i], cnt));
+
+	/* free the temporary array */
+	pfree(elements);
 
 	PG_RETURN_NUMERIC(result);
 }
@@ -1395,6 +1437,7 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 	Numeric	result[7];
 	Numeric	sum_x, sum_x2;
 	Numeric	cntNumeric, cntNumeric_1;
+	Numeric *elements;
 
 	state_numeric *data;
 
@@ -1415,7 +1458,10 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 	cntNumeric = create_numeric(to-from);
 	cntNumeric_1 = create_numeric(to-from-1);
 
-	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	elements = build_numeric_elements(data);
+
+	if (! data->sorted)
+		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	/* average */
 	result[0] = create_numeric(0);
@@ -1428,10 +1474,10 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 	/* compute sumX and sumX2 */
 	for (i = from; i < to; i++)
 	{
-		sum_x  = add_numeric(sum_x, data->elements[i]);
+		sum_x  = add_numeric(sum_x, elements[i]);
 		sum_x2 = add_numeric(sum_x2,
-							 mul_numeric(data->elements[i],
-										 data->elements[i]));
+							 mul_numeric(elements[i],
+										 elements[i]));
 	}
 
 	/* compute the average */
@@ -1457,7 +1503,7 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 	result[3] = create_numeric(0);
 	for (i = from; i < to; i++)
 	{
-		Numeric	 delta = sub_numeric(data->elements[i], result[0]);
+		Numeric	 delta = sub_numeric(elements[i], result[0]);
 		result[3]   = add_numeric(result[3], mul_numeric(delta, delta));
 	}
 	result[3] = div_numeric(result[3], cntNumeric);
@@ -1465,6 +1511,9 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 	result[4] = sqrt_numeric(result[1]); /* stddev_pop */
 	result[5] = sqrt_numeric(result[2]); /* stddev_samp */
 	result[6] = sqrt_numeric(result[3]); /* stddev */
+
+	/* free the temporary array */
+	pfree(elements);
 
 	return numeric_to_array(fcinfo, result, 7);
 }
@@ -1580,6 +1629,7 @@ trimmed_var_numeric(PG_FUNCTION_ARGS)
 {
 	int		i, from, to;
 	Numeric	result, avg, cnt;
+	Numeric *elements;
 
 	state_numeric *data;
 
@@ -1600,17 +1650,22 @@ trimmed_var_numeric(PG_FUNCTION_ARGS)
 	avg = create_numeric(0);
 	result = create_numeric(0);
 
-	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	elements = build_numeric_elements(data);
+
+	if (! data->sorted)
+		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
-		avg = add_numeric(avg, div_numeric(data->elements[i], cnt));
+		avg = add_numeric(avg, div_numeric(elements[i], cnt));
 
 	for (i = from; i < to; i++)
 		result = add_numeric(
 					result,
 					div_numeric(
-						pow_numeric(sub_numeric(data->elements[i],avg),2),
+						pow_numeric(sub_numeric(elements[i],avg),2),
 						cnt));
+
+	pfree(elements);
 
 	PG_RETURN_NUMERIC(result);
 }
@@ -1721,6 +1776,7 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 {
 	int		i, from, to;
 	Numeric	sum_x, sum_x2, cnt;
+	Numeric *elements;
 
 	state_numeric *data;
 
@@ -1741,15 +1797,20 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 	sum_x = create_numeric(0);
 	sum_x2 = create_numeric(0);
 
-	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	elements = build_numeric_elements(data);
+
+	if (! data->sorted)
+		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = add_numeric(sum_x, data->elements[i]);
+		sum_x = add_numeric(sum_x, elements[i]);
 		sum_x2 = add_numeric(
 					sum_x2,
-					mul_numeric(data->elements[i], data->elements[i]));
+					mul_numeric(elements[i], elements[i]));
 	}
+
+	pfree(elements);
 
 	PG_RETURN_NUMERIC (div_numeric(
 							sub_numeric(
@@ -1865,6 +1926,7 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 {
 	int		i, from, to;
 	Numeric	sum_x, sum_x2, cnt;
+	Numeric *elements;
 
 	state_numeric *data;
 
@@ -1885,15 +1947,20 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 	sum_x = create_numeric(0);
 	sum_x2 = create_numeric(0);
 
-	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	elements = build_numeric_elements(data);
+
+	if (! data->sorted)
+		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = add_numeric(sum_x, data->elements[i]);
+		sum_x = add_numeric(sum_x, elements[i]);
 		sum_x2 = add_numeric(
 						sum_x2,
-						mul_numeric(data->elements[i], data->elements[i]));
+						mul_numeric(elements[i], elements[i]));
 	}
+
+	pfree(elements);
 
 	PG_RETURN_NUMERIC (div_numeric(
 							sub_numeric(
@@ -2015,6 +2082,7 @@ trimmed_stddev_numeric(PG_FUNCTION_ARGS)
 {
 	int		i, from, to;
 	Numeric	result, avg, cnt;
+	Numeric *elements;
 
 	state_numeric *data;
 
@@ -2035,17 +2103,22 @@ trimmed_stddev_numeric(PG_FUNCTION_ARGS)
 	avg = create_numeric(0);
 	result = create_numeric(0);
 
-	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	elements = build_numeric_elements(data);
+
+	if (! data->sorted)
+		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
-		avg = add_numeric(avg, div_numeric(data->elements[i], cnt));
+		avg = add_numeric(avg, div_numeric(elements[i], cnt));
 
 	for (i = from; i < to; i++)
 		result = add_numeric(
 					result,
 					div_numeric(
-						pow_numeric(sub_numeric(data->elements[i], avg), 2),
+						pow_numeric(sub_numeric(elements[i], avg), 2),
 						cnt));
+
+	pfree(elements);
 
 	PG_RETURN_NUMERIC (sqrt_numeric(result));
 }
@@ -2157,6 +2230,7 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 {
 	int		i, from, to;
 	Numeric	sum_x, sum_x2, cnt;
+	Numeric *elements;
 
 	state_numeric *data;
 
@@ -2177,15 +2251,20 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 	sum_x = create_numeric(0);
 	sum_x2 = create_numeric(0);
 
-	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	elements = build_numeric_elements(data);
+
+	if (! data->sorted)
+		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = add_numeric(sum_x, data->elements[i]);
+		sum_x = add_numeric(sum_x, elements[i]);
 		sum_x2 = add_numeric(sum_x2,
-							 mul_numeric(data->elements[i],
-										 data->elements[i]));
+							 mul_numeric(elements[i],
+										 elements[i]));
 	}
+
+	pfree(elements);
 
 	PG_RETURN_NUMERIC (sqrt_numeric(
 							div_numeric(
@@ -2302,6 +2381,7 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 {
 	int		i, from, to;
 	Numeric	sum_x, sum_x2, cnt;
+	Numeric *elements;
 
 	state_numeric *data;
 
@@ -2322,13 +2402,18 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 	sum_x = create_numeric(0);
 	sum_x2 = create_numeric(0);
 
-	pg_qsort(data->elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	elements = build_numeric_elements(data);
+
+	if (! data->sorted)
+		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = add_numeric(sum_x, data->elements[i]);
-		sum_x2 = add_numeric(sum_x2, pow_numeric(data->elements[i], 2));
+		sum_x = add_numeric(sum_x, elements[i]);
+		sum_x2 = add_numeric(sum_x2, pow_numeric(elements[i], 2));
 	}
+
+	pfree(elements);
 
 	PG_RETURN_NUMERIC (sqrt_numeric(
 							div_numeric(
@@ -2532,4 +2617,25 @@ numeric_to_array(FunctionCallInfo fcinfo, Numeric * d, int len)
 
 	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate,
 										  CurrentMemoryContext));
+}
+
+static Numeric *
+build_numeric_elements(state_numeric *state)
+{
+	int		i;
+	char   *tmp = state->data;
+	Numeric *elements = (Numeric*)palloc(state->nelements * sizeof(Numeric));
+
+	i = 0;
+	while (tmp < state->data + state->usedlen)
+	{
+		elements[i++] = (Numeric)tmp;
+		tmp += VARSIZE(tmp);
+
+		Assert(i <= state->nelements);
+	}
+
+	Assert(i == state->nelements);
+
+	return elements;
 }
