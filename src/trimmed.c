@@ -491,6 +491,7 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 		state->data = NULL;
 		state->usedlen = 0;
 		state->maxlen = 32;	/* TODO make this a constant */
+		state->sorted = false;
 
 		/* how much to cut */
 		if (PG_ARGISNULL(2) || PG_ARGISNULL(3))
