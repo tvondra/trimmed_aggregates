@@ -902,6 +902,7 @@ trimmed_combine_int32(PG_FUNCTION_ARGS)
 
 		state1->cut_lower = state2->cut_lower;
 		state1->cut_upper = state2->cut_upper;
+		state1->sorted = state2->sorted;
 
 		state1->elements = (int32*)palloc(sizeof(int32) * state2->maxelements);
 
@@ -992,6 +993,7 @@ trimmed_combine_int64(PG_FUNCTION_ARGS)
 
 		state1->cut_lower = state2->cut_lower;
 		state1->cut_upper = state2->cut_upper;
+		state1->sorted = state2->sorted;
 
 		state1->elements = (int64*)palloc(sizeof(int64) * state2->maxelements);
 
@@ -1082,6 +1084,7 @@ trimmed_combine_numeric(PG_FUNCTION_ARGS)
 		state1->cut_upper = state2->cut_upper;
 		state1->usedlen = state2->usedlen;
 		state1->maxlen = state2->maxlen;
+		state1->sorted = state2->sorted;
 
 		/* copy the buffer */
 		state1->data = MemoryContextAlloc(agg_context, state1->usedlen);
