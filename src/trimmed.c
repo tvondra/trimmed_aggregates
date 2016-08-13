@@ -23,6 +23,7 @@
 #include "utils/lsyscache.h"
 #include "utils/numeric.h"
 #include "utils/builtins.h"
+#include "utils/memutils.h"
 #include "nodes/memnodes.h"
 #include "fmgr.h"
 #include "catalog/pg_type.h"
@@ -2794,7 +2795,10 @@ numeric_zero()
 			)
 		);
 
-	const_zero = (Numeric)DatumGetPointer(d);
+	/* we need to copy the value to TopMemoryContext */
+	const_zero = (Numeric)MemoryContextAlloc(TopMemoryContext, VARSIZE(d));
+
+	memcpy(const_zero, DatumGetPointer(d), VARSIZE(d));
 
 	return &const_zero;
 }
