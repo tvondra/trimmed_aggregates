@@ -1710,7 +1710,8 @@ trimmed_var_pop_double(PG_FUNCTION_ARGS)
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(state->elements, state->nelements, sizeof(double), &double_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 	{
