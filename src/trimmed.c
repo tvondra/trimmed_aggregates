@@ -2129,7 +2129,7 @@ trimmed_stddev_double(PG_FUNCTION_ARGS)
 	for (i = from; i < to; i++)
 		result = result + (state->elements[i] - avg)*(state->elements[i] - avg);
 
-	PG_RETURN_FLOAT8 (sqrt(result)/cnt);
+	PG_RETURN_FLOAT8 (sqrt(result/cnt));
 }
 
 Datum
@@ -2165,7 +2165,7 @@ trimmed_stddev_int32(PG_FUNCTION_ARGS)
 	for (i = from; i < to; i++)
 		result = result + (state->elements[i] - avg)*(state->elements[i] - avg);
 
-	PG_RETURN_FLOAT8 (sqrt(result)/cnt);
+	PG_RETURN_FLOAT8 (sqrt(result/cnt));
 }
 
 Datum
@@ -2201,7 +2201,7 @@ trimmed_stddev_int64(PG_FUNCTION_ARGS)
 	for (i = from; i < to; i++)
 		result = result + (state->elements[i] - avg)*(state->elements[i] - avg);
 
-	PG_RETURN_FLOAT8 (sqrt(result)/cnt);
+	PG_RETURN_FLOAT8 (sqrt(result/cnt));
 }
 
 Datum
