@@ -1465,8 +1465,12 @@ trimmed_avg_numeric(PG_FUNCTION_ARGS)
 
 	/* we need to walk through the buffer from start */
 	for (i = 0, ptr = state->data; i < to; i++, ptr += VARSIZE(ptr))
+	{
+		Assert(ptr <= (state->data + state->usedlen));
+
 		if (i >= from)
 			result = add_numeric(result, div_numeric((Numeric)ptr, cnt));
+	}
 
 	PG_RETURN_NUMERIC(result);
 }
@@ -1516,6 +1520,8 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 	/* compute sumX and sumX2 */
 	for (i = 0, ptr = state->data, fromptr = NULL; i < to; i++, ptr += VARSIZE(ptr))
 	{
+		Assert(ptr <= (state->data + state->usedlen));
+
 		if (i >= from)
 		{
 			/* remember offset to the 'from' value */
@@ -1527,6 +1533,9 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 											 (Numeric)ptr));
 		}
 	}
+
+	/* make sure we got a valid pointer to start from in the second pass */
+	Assert(fromptr != NULL);
 
 	/* compute the average */
 	result[0] = div_numeric(sum_x, cntNumeric);
@@ -1551,7 +1560,11 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 	result[3] = create_numeric(0);
 	for (i = from, ptr = fromptr; i < to; i++, ptr += VARSIZE(ptr))
 	{
-		Numeric	 delta = sub_numeric((Numeric)ptr, result[0]);
+		Numeric	 delta;
+
+		Assert(ptr <= (state->data + state->usedlen));
+
+		delta = sub_numeric((Numeric)ptr, result[0]);
 		result[3]   = add_numeric(result[3], mul_numeric(delta, delta));
 	}
 	result[3] = div_numeric(result[3], cntNumeric);
@@ -1702,6 +1715,9 @@ trimmed_var_numeric(PG_FUNCTION_ARGS)
 	sort_state_numeric(state);
 
 	for (i = 0, ptr = state->data, fromptr = NULL; i < to; i++, ptr += VARSIZE(ptr))
+	{
+		Assert(ptr <= (state->data + state->usedlen));
+
 		if (i >= from)
 		{
 			/* remember offset to the 'from' value */
@@ -1709,13 +1725,21 @@ trimmed_var_numeric(PG_FUNCTION_ARGS)
 
 			avg = add_numeric(avg, div_numeric((Numeric)ptr, cnt));
 		}
+	}
+
+	/* make sure we got a valid pointer for the second pass */
+	Assert(fromptr != NULL);
 
 	for (i = from, ptr = fromptr; i < to; i++, ptr += VARSIZE(ptr))
+	{
+		Assert(ptr <= (state->data + state->usedlen));
+
 		result = add_numeric(
 					result,
 					div_numeric(
 						pow_numeric(sub_numeric((Numeric)ptr,avg),2),
 						cnt));
+	}
 
 	PG_RETURN_NUMERIC(result);
 }
@@ -1871,6 +1895,8 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 
 	for (i = 0, ptr = state->data; i < to; i++, ptr += VARSIZE(ptr))
 	{
+		Assert(ptr <= (state->data + state->usedlen));
+
 		sum_x = add_numeric(sum_x, (Numeric)ptr);
 		sum_x2 = add_numeric(
 					sum_x2,
@@ -2041,6 +2067,8 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 
 	for (i = 0, ptr = state->data; i < to; i++, ptr += VARSIZE(ptr))
 	{
+		Assert(ptr <= (state->data + state->usedlen));
+
 		sum_x = add_numeric(sum_x, (Numeric)ptr);
 		sum_x2 = add_numeric(
 						sum_x2,
@@ -2200,6 +2228,9 @@ trimmed_stddev_numeric(PG_FUNCTION_ARGS)
 	sort_state_numeric(state);
 
 	for (i = 0, ptr = state->data, fromptr = NULL; i < to; i++, ptr += VARSIZE(ptr))
+	{
+		Assert(ptr <= (state->data + state->usedlen));
+
 		if (i >= from)
 		{
 			/* remember offset to the 'from' value */
@@ -2207,13 +2238,21 @@ trimmed_stddev_numeric(PG_FUNCTION_ARGS)
 
 			avg = add_numeric(avg, div_numeric((Numeric)ptr, cnt));
 		}
+	}
+
+	/* make sure we have a valid start pointer for the second pass */
+	Assert(fromptr != NULL);
 
 	for (i = from, ptr = fromptr; i < to; i++, ptr += VARSIZE(ptr))
+	{
+		Assert(ptr <= (state->data + state->usedlen));
+
 		result = add_numeric(
 					result,
 					div_numeric(
 						pow_numeric(sub_numeric((Numeric)ptr, avg), 2),
 						cnt));
+	}
 
 	PG_RETURN_NUMERIC (sqrt_numeric(result));
 }
@@ -2369,6 +2408,8 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 
 	for (i = 0, ptr = state->data; i < to; i++, ptr += VARSIZE(ptr))
 	{
+		Assert(ptr <= (state->data + state->usedlen));
+
 		sum_x = add_numeric(sum_x, (Numeric)ptr);
 		sum_x2 = add_numeric(sum_x2,
 							 mul_numeric((Numeric)ptr, (Numeric)ptr));
@@ -2539,6 +2580,8 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 
 	for (i = 0, ptr = state->data; i < to; i++, ptr += VARSIZE(ptr))
 	{
+		Assert(ptr <= (state->data + state->usedlen));
+
 		sum_x = add_numeric(sum_x, (Numeric)ptr);
 		sum_x2 = add_numeric(sum_x2, pow_numeric((Numeric)ptr, 2));
 	}
