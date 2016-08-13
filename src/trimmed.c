@@ -827,7 +827,10 @@ trimmed_combine_double(PG_FUNCTION_ARGS)
 	}
 
 	Assert((state1 != NULL) && (state2 != NULL));
-	Assert(state1->sorted && state2->sorted);
+
+	/* make sure both states are sorted */
+	sort_state_double(state1);
+	sort_state_double(state2);
 
 	tmp = (double*)MemoryContextAlloc(agg_context,
 					  sizeof(double) * (state1->nelements + state2->nelements));
@@ -914,7 +917,10 @@ trimmed_combine_int32(PG_FUNCTION_ARGS)
 	}
 
 	Assert((state1 != NULL) && (state2 != NULL));
-	Assert(state1->sorted && state2->sorted);
+
+	/* make sure both states are sorted */
+	sort_state_int32(state1);
+	sort_state_int32(state2);
 
 	tmp = (int32*)MemoryContextAlloc(agg_context,
 					  sizeof(int32) * (state1->nelements + state2->nelements));
@@ -1001,7 +1007,10 @@ trimmed_combine_int64(PG_FUNCTION_ARGS)
 	}
 
 	Assert((state1 != NULL) && (state2 != NULL));
-	Assert(state1->sorted && state2->sorted);
+
+	/* make sure both states are sorted */
+	sort_state_int64(state1);
+	sort_state_int64(state2);
 
 	tmp = (int64*)MemoryContextAlloc(agg_context,
 					  sizeof(int64) * (state1->nelements + state2->nelements));
@@ -1080,6 +1089,12 @@ trimmed_combine_numeric(PG_FUNCTION_ARGS)
 
 		PG_RETURN_POINTER(state1);
 	}
+
+	Assert((state1 != NULL) && (state2 != NULL));
+
+	/* make sure both states are sorted */
+	sort_state_numeric(state1);
+	sort_state_numeric(state2);
 
 	/* allocate temporary arrays */
 	data = MemoryContextAlloc(agg_context, state1->usedlen + state2->usedlen);
