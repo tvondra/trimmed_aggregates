@@ -278,7 +278,7 @@ static Numeric sqrt_numeric(Numeric a);
 Datum
 trimmed_append_double(PG_FUNCTION_ARGS)
 {
-	state_double *data;
+	state_double *state;
 	MemoryContext aggcontext;
 
 	GET_AGG_CONTEXT("trimmed_append_double", fcinfo, aggcontext);
@@ -294,55 +294,55 @@ trimmed_append_double(PG_FUNCTION_ARGS)
 	{
 		MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
 
-		data = (state_double*)palloc(sizeof(state_double));
-		data->elements = (double*)palloc(MIN_ELEMENTS * sizeof(double));
+		state = (state_double*)palloc(sizeof(state_double));
+		state->elements = (double*)palloc(MIN_ELEMENTS * sizeof(double));
 
 		MemoryContextSwitchTo(oldcontext);
 
-		data->maxelements = MIN_ELEMENTS;
-		data->nelements = 0;
-		data->sorted = false;
+		state->maxelements = MIN_ELEMENTS;
+		state->nelements = 0;
+		state->sorted = false;
 
 		/* how much to cut */
 		if (PG_ARGISNULL(2) || PG_ARGISNULL(3))
 			elog(ERROR, "both upper and lower cut must not be NULL");
 
-		data->cut_lower = PG_GETARG_FLOAT8(2);
-		data->cut_upper = PG_GETARG_FLOAT8(3);
+		state->cut_lower = PG_GETARG_FLOAT8(2);
+		state->cut_upper = PG_GETARG_FLOAT8(3);
 
-		if (data->cut_lower < 0.0 || data->cut_lower >= 1.0)
+		if (state->cut_lower < 0.0 || state->cut_lower >= 1.0)
 			elog(ERROR, "lower cut needs to be between 0 and 1 (inclusive)");
 
-		if (data->cut_upper < 0.0 || data->cut_upper >= 1.0)
+		if (state->cut_upper < 0.0 || state->cut_upper >= 1.0)
 			elog(ERROR, "upper cut needs to be between 0 and 1 (inclusive)");
 
-		if (data->cut_lower + data->cut_upper >= 1.0)
+		if (state->cut_lower + state->cut_upper >= 1.0)
 			elog(ERROR, "lower and upper cut sum to >= 1.0");
 	}
 	else
-		data = (state_double*)PG_GETARG_POINTER(0);
+		state = (state_double*)PG_GETARG_POINTER(0);
 
 	if (! PG_ARGISNULL(1))
 	{
 		double element = PG_GETARG_FLOAT8(1);
 
-		if (data->nelements >= data->maxelements)
+		if (state->nelements >= state->maxelements)
 		{
-			data->maxelements *= 2;
-			data->elements = (double*)repalloc(data->elements,
-											   sizeof(double) * data->maxelements);
+			state->maxelements *= 2;
+			state->elements = (double*)repalloc(state->elements,
+											   sizeof(double) * state->maxelements);
 		}
 
-		data->elements[data->nelements++] = element;
+		state->elements[state->nelements++] = element;
 	}
 
-	PG_RETURN_POINTER(data);
+	PG_RETURN_POINTER(state);
 }
 
 Datum
 trimmed_append_int32(PG_FUNCTION_ARGS)
 {
-	state_int32 *data;
+	state_int32 *state;
 	MemoryContext aggcontext;
 
 	GET_AGG_CONTEXT("trimmed_append_int32", fcinfo, aggcontext);
@@ -358,55 +358,55 @@ trimmed_append_int32(PG_FUNCTION_ARGS)
 	{
 		MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
 
-		data = (state_int32*)palloc(sizeof(state_int32));
-		data->elements = (int32*)palloc(MIN_ELEMENTS * sizeof(int32));
+		state = (state_int32*)palloc(sizeof(state_int32));
+		state->elements = (int32*)palloc(MIN_ELEMENTS * sizeof(int32));
 
 		MemoryContextSwitchTo(oldcontext);
 
-		data->maxelements = MIN_ELEMENTS;
-		data->nelements = 0;
-		data->sorted = false;
+		state->maxelements = MIN_ELEMENTS;
+		state->nelements = 0;
+		state->sorted = false;
 
 		/* how much to cut */
 		if (PG_ARGISNULL(2) || PG_ARGISNULL(3))
 			elog(ERROR, "both upper and lower cut must not be NULL");
 
-		data->cut_lower = PG_GETARG_FLOAT8(2);
-		data->cut_upper = PG_GETARG_FLOAT8(3);
+		state->cut_lower = PG_GETARG_FLOAT8(2);
+		state->cut_upper = PG_GETARG_FLOAT8(3);
 
-		if (data->cut_lower < 0.0 || data->cut_lower >= 1.0)
+		if (state->cut_lower < 0.0 || state->cut_lower >= 1.0)
 			elog(ERROR, "lower cut needs to be between 0 and 1 (inclusive)");
 
-		if (data->cut_upper < 0.0 || data->cut_upper >= 1.0)
+		if (state->cut_upper < 0.0 || state->cut_upper >= 1.0)
 			elog(ERROR, "upper cut needs to be between 0 and 1 (inclusive)");
 
-		if (data->cut_lower + data->cut_upper >= 1.0)
+		if (state->cut_lower + state->cut_upper >= 1.0)
 			elog(ERROR, "lower and upper cut sum to >= 1.0");
 	}
 	else
-		data = (state_int32*)PG_GETARG_POINTER(0);
+		state = (state_int32*)PG_GETARG_POINTER(0);
 
 	if (! PG_ARGISNULL(1))
 	{
 		int32 element = PG_GETARG_INT32(1);
 
-		if (data->nelements >= data->maxelements)
+		if (state->nelements >= state->maxelements)
 		{
-			data->maxelements *= 2;
-			data->elements = (int32*)repalloc(data->elements,
-											  sizeof(int32) * data->maxelements);
+			state->maxelements *= 2;
+			state->elements = (int32*)repalloc(state->elements,
+											  sizeof(int32) * state->maxelements);
 		}
 
-		data->elements[data->nelements++] = element;
+		state->elements[state->nelements++] = element;
 	}
 
-	PG_RETURN_POINTER(data);
+	PG_RETURN_POINTER(state);
 }
 
 Datum
 trimmed_append_int64(PG_FUNCTION_ARGS)
 {
-	state_int64 *data;
+	state_int64 *state;
 	MemoryContext aggcontext;
 
 	GET_AGG_CONTEXT("trimmed_append_int64", fcinfo, aggcontext);
@@ -422,55 +422,55 @@ trimmed_append_int64(PG_FUNCTION_ARGS)
 	{
 		MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
 
-		data = (state_int64*)palloc(sizeof(state_int64));
-		data->elements = (int64*)palloc(MIN_ELEMENTS * sizeof(int64));
+		state = (state_int64*)palloc(sizeof(state_int64));
+		state->elements = (int64*)palloc(MIN_ELEMENTS * sizeof(int64));
 
 		MemoryContextSwitchTo(oldcontext);
 
-		data->maxelements = MIN_ELEMENTS;
-		data->nelements = 0;
-		data->sorted = false;
+		state->maxelements = MIN_ELEMENTS;
+		state->nelements = 0;
+		state->sorted = false;
 
 		/* how much to cut */
 		if (PG_ARGISNULL(2) || PG_ARGISNULL(3))
 			elog(ERROR, "both upper and lower cut must not be NULL");
 
-		data->cut_lower = PG_GETARG_FLOAT8(2);
-		data->cut_upper = PG_GETARG_FLOAT8(3);
+		state->cut_lower = PG_GETARG_FLOAT8(2);
+		state->cut_upper = PG_GETARG_FLOAT8(3);
 
-		if (data->cut_lower < 0.0 || data->cut_lower >= 1.0)
+		if (state->cut_lower < 0.0 || state->cut_lower >= 1.0)
 			elog(ERROR, "lower cut needs to be between 0 and 1 (inclusive)");
 
-		if (data->cut_upper < 0.0 || data->cut_upper >= 1.0)
+		if (state->cut_upper < 0.0 || state->cut_upper >= 1.0)
 			elog(ERROR, "upper cut needs to be between 0 and 1 (inclusive)");
 
-		if (data->cut_lower + data->cut_upper >= 1.0)
+		if (state->cut_lower + state->cut_upper >= 1.0)
 			elog(ERROR, "lower and upper cut sum to >= 1.0");
 	}
 	else
-		data = (state_int64*)PG_GETARG_POINTER(0);
+		state = (state_int64*)PG_GETARG_POINTER(0);
 
 	if (! PG_ARGISNULL(1))
 	{
 		int64 element = PG_GETARG_INT64(1);
 
-		if (data->nelements >= data->maxelements)
+		if (state->nelements >= state->maxelements)
 		{
-			data->maxelements *= 2;
-			data->elements = (int64*)repalloc(data->elements,
-											  sizeof(int64) * data->maxelements);
+			state->maxelements *= 2;
+			state->elements = (int64*)repalloc(state->elements,
+											  sizeof(int64) * state->maxelements);
 		}
 
-		data->elements[data->nelements++] = element;
+		state->elements[state->nelements++] = element;
 	}
 
-	PG_RETURN_POINTER(data);
+	PG_RETURN_POINTER(state);
 }
 
 Datum
 trimmed_append_numeric(PG_FUNCTION_ARGS)
 {
-	state_numeric *data;
+	state_numeric *state;
 	MemoryContext aggcontext;
 
 	GET_AGG_CONTEXT("trimmed_append_numeric", fcinfo, aggcontext);
@@ -484,32 +484,32 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 
 	if (PG_ARGISNULL(0))
 	{
-		data = (state_numeric*)MemoryContextAlloc(aggcontext,
-												  sizeof(state_numeric));
+		state = (state_numeric*)MemoryContextAlloc(aggcontext,
+												   sizeof(state_numeric));
 
-		data->nelements = 0;
-		data->data = NULL;
-		data->usedlen = 0;
-		data->maxlen = 32;	/* TODO make this a constant */
+		state->nelements = 0;
+		state->data = NULL;
+		state->usedlen = 0;
+		state->maxlen = 32;	/* TODO make this a constant */
 
 		/* how much to cut */
 		if (PG_ARGISNULL(2) || PG_ARGISNULL(3))
 			elog(ERROR, "both upper and lower cut must not be NULL");
 
-		data->cut_lower = PG_GETARG_FLOAT8(2);
-		data->cut_upper = PG_GETARG_FLOAT8(3);
+		state->cut_lower = PG_GETARG_FLOAT8(2);
+		state->cut_upper = PG_GETARG_FLOAT8(3);
 
-		if (data->cut_lower < 0.0 || data->cut_lower >= 1.0)
+		if (state->cut_lower < 0.0 || state->cut_lower >= 1.0)
 			elog(ERROR, "lower cut needs to be between 0 and 1 (inclusive)");
 
-		if (data->cut_upper < 0.0 || data->cut_upper >= 1.0)
+		if (state->cut_upper < 0.0 || state->cut_upper >= 1.0)
 			elog(ERROR, "upper cut needs to be between 0 and 1 (inclusive)");
 
-		if (data->cut_lower + data->cut_upper >= 1.0)
+		if (state->cut_lower + state->cut_upper >= 1.0)
 			elog(ERROR, "lower and upper cut sum to >= 1.0");
 	}
 	else
-		data = (state_numeric*)PG_GETARG_POINTER(0);
+		state = (state_numeric*)PG_GETARG_POINTER(0);
 
 	if (! PG_ARGISNULL(1))
 	{
@@ -518,54 +518,54 @@ trimmed_append_numeric(PG_FUNCTION_ARGS)
 		int len = VARSIZE(element);
 
 		/* if there's not enough space in the data buffer, repalloc it */
-		if (data->usedlen + len > data->maxlen)
+		if (state->usedlen + len > state->maxlen)
 		{
-			while (len + data->usedlen > data->maxlen)
-				data->maxlen *= 2;
+			while (len + state->usedlen > state->maxlen)
+				state->maxlen *= 2;
 
-			if (data->data != NULL)
-				data->data = repalloc(data->data, data->maxlen);
+			if (state->data != NULL)
+				state->data = repalloc(state->data, state->maxlen);
 		}
 
 		/* if first entry, we need to allocate the buffer */
-		if (! data->data)
-			data->data = MemoryContextAlloc(aggcontext, data->maxlen);
+		if (! state->data)
+			state->data = MemoryContextAlloc(aggcontext, state->maxlen);
 
 		/* copy the contents of the Numeric in place */
-		memcpy(data->data + data->usedlen, element, len);
+		memcpy(state->data + state->usedlen, element, len);
 
-		data->usedlen += len;
-		data->nelements += 1;
+		state->usedlen += len;
+		state->nelements += 1;
 	}
 
-	PG_RETURN_POINTER(data);
+	PG_RETURN_POINTER(state);
 }
 
 Datum
 trimmed_serial_double(PG_FUNCTION_ARGS)
 {
-	state_double   *data = (state_double *)PG_GETARG_POINTER(0);
+	state_double   *state = (state_double *)PG_GETARG_POINTER(0);
 	Size			hlen = offsetof(state_double, elements);	/* header */
-	Size			len = data->nelements * sizeof(double);		/* elements */
+	Size			len = state->nelements * sizeof(double);		/* elements */
 	bytea		   *out = (bytea *)palloc(VARHDRSZ + len + hlen);
 	char		   *ptr;
 
 	CHECK_AGG_CONTEXT("trimmed_serial_double", fcinfo);
 
 	/* we want to serialize the data in sorted format */
-	if (! data->sorted)
+	if (! state->sorted)
 	{
-		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
-		data->sorted = true;
+		pg_qsort(state->elements, state->nelements, sizeof(double), &double_comparator);
+		state->sorted = true;
 	}
 
 	SET_VARSIZE(out, VARHDRSZ + len + hlen);
 	ptr = VARDATA(out);
 
-	memcpy(ptr, data, offsetof(state_double, elements));
+	memcpy(ptr, state, offsetof(state_double, elements));
 	ptr += offsetof(state_double, elements);
 
-	memcpy(ptr, data->elements, len);
+	memcpy(ptr, state->elements, len);
 
 	PG_RETURN_BYTEA_P(out);
 }
@@ -573,28 +573,28 @@ trimmed_serial_double(PG_FUNCTION_ARGS)
 Datum
 trimmed_serial_int32(PG_FUNCTION_ARGS)
 {
-	state_int32	   *data = (state_int32 *)PG_GETARG_POINTER(0);
+	state_int32	   *state = (state_int32 *)PG_GETARG_POINTER(0);
 	Size			hlen = offsetof(state_int32, elements);		/* header */
-	Size			len = data->nelements * sizeof(int32);		/* elements */
+	Size			len = state->nelements * sizeof(int32);		/* elements */
 	bytea		   *out = (bytea *)palloc(VARHDRSZ + len + hlen);
 	char		   *ptr;
 
 	CHECK_AGG_CONTEXT("trimmed_serial_int32", fcinfo);
 
 	/* we want to serialize the data in sorted format */
-	if (! data->sorted)
+	if (! state->sorted)
 	{
-		pg_qsort(data->elements, data->nelements, sizeof(double), &int32_comparator);
-		data->sorted = true;
+		pg_qsort(state->elements, state->nelements, sizeof(double), &int32_comparator);
+		state->sorted = true;
 	}
 
 	SET_VARSIZE(out, VARHDRSZ + len + hlen);
 	ptr = VARDATA(out);
 
-	memcpy(ptr, data, offsetof(state_int32, elements));
+	memcpy(ptr, state, offsetof(state_int32, elements));
 	ptr += offsetof(state_int32, elements);
 
-	memcpy(ptr, data->elements, len);
+	memcpy(ptr, state->elements, len);
 
 	PG_RETURN_BYTEA_P(out);
 }
@@ -602,28 +602,28 @@ trimmed_serial_int32(PG_FUNCTION_ARGS)
 Datum
 trimmed_serial_int64(PG_FUNCTION_ARGS)
 {
-	state_int64	   *data = (state_int64 *)PG_GETARG_POINTER(0);
+	state_int64	   *state = (state_int64 *)PG_GETARG_POINTER(0);
 	Size			hlen = offsetof(state_int64, elements);		/* header */
-	Size			len = data->nelements * sizeof(int64);		/* elements */
+	Size			len = state->nelements * sizeof(int64);		/* elements */
 	bytea		   *out = (bytea *)palloc(VARHDRSZ + len + hlen);
 	char		   *ptr;
 
 	CHECK_AGG_CONTEXT("trimmed_serial_int64", fcinfo);
 
 	/* we want to serialize the data in sorted format */
-	if (! data->sorted)
+	if (! state->sorted)
 	{
-		pg_qsort(data->elements, data->nelements, sizeof(double), &int64_comparator);
-		data->sorted = true;
+		pg_qsort(state->elements, state->nelements, sizeof(double), &int64_comparator);
+		state->sorted = true;
 	}
 
 	SET_VARSIZE(out, VARHDRSZ + len + hlen);
 	ptr = VARDATA(out);
 
-	memcpy(ptr, data, offsetof(state_int64, elements));
+	memcpy(ptr, state, offsetof(state_int64, elements));
 	ptr += offsetof(state_int64, elements);
 
-	memcpy(ptr, data->elements, len);
+	memcpy(ptr, state->elements, len);
 
 	PG_RETURN_BYTEA_P(out);
 }
@@ -631,9 +631,9 @@ trimmed_serial_int64(PG_FUNCTION_ARGS)
 Datum
 trimmed_serial_numeric(PG_FUNCTION_ARGS)
 {
-	state_numeric *data = (state_numeric *)PG_GETARG_POINTER(0);
+	state_numeric *state = (state_numeric *)PG_GETARG_POINTER(0);
 	Size	hlen = offsetof(state_numeric, data);		/* header */
-	Size	len = data->usedlen;						/* elements */
+	Size	len = state->usedlen;						/* elements */
 	bytea  *out;
 	char   *ptr;
 
@@ -643,32 +643,32 @@ trimmed_serial_numeric(PG_FUNCTION_ARGS)
 	SET_VARSIZE(out, VARHDRSZ + len + hlen);
 	ptr = (char*) VARDATA(out);
 
-	if (! data->sorted)	/* not sorted yet */
+	if (! state->sorted)	/* not sorted yet */
 	{
 		int		i;
-		char   *tmp = data->data;
-		Numeric *items = (Numeric*)palloc(sizeof(Numeric) * data->nelements);
+		char   *tmp = state->data;
+		Numeric *items = (Numeric*)palloc(sizeof(Numeric) * state->nelements);
 
 		i = 0;
-		while (tmp < data->data + data->usedlen)
+		while (tmp < state->data + state->usedlen)
 		{
 			items[i++] = (Numeric)tmp;
 			tmp += VARSIZE(tmp);
 		}
 
-		Assert(i == data->nelements);
+		Assert(i == state->nelements);
 
-		pg_qsort(items, data->nelements, sizeof(Numeric), &numeric_comparator);
+		pg_qsort(items, state->nelements, sizeof(Numeric), &numeric_comparator);
 
-		data->sorted = true;
+		state->sorted = true;
 
-		memcpy(ptr, data, offsetof(state_numeric, data));
+		memcpy(ptr, state, offsetof(state_numeric, data));
 		ptr += offsetof(state_numeric, data);
 
-		data->sorted = false; /* reset the state back (not sorting in-place) */
+		state->sorted = false; /* reset the state back (not sorting in-place) */
 
 		/* copy the values in place */
-		for (i = 0; i < data->nelements; i++)
+		for (i = 0; i < state->nelements; i++)
 		{
 			memcpy(ptr, items[i], VARSIZE(items[i]));
 			ptr += VARSIZE(items[i]);
@@ -678,11 +678,11 @@ trimmed_serial_numeric(PG_FUNCTION_ARGS)
 	}
 	else	/* already sorted, copy as a chunk at once */
 	{
-		memcpy(ptr, data, offsetof(state_numeric, data));
+		memcpy(ptr, state, offsetof(state_numeric, data));
 		ptr += offsetof(state_numeric, data);
 
-		memcpy(ptr, data->data, data->usedlen);
-		ptr += data->usedlen;
+		memcpy(ptr, state->data, state->usedlen);
+		ptr += state->usedlen;
 	}
 
 	/* we better get exactly the expected amount of data */
@@ -695,9 +695,9 @@ Datum
 trimmed_deserial_double(PG_FUNCTION_ARGS)
 {
 	state_double *out = (state_double *)palloc(sizeof(state_double));
-	bytea  *data = (bytea *)PG_GETARG_POINTER(0);
-	Size	len = VARSIZE_ANY_EXHDR(data);
-	char   *ptr = VARDATA(data);
+	bytea  *state = (bytea *)PG_GETARG_POINTER(0);
+	Size	len = VARSIZE_ANY_EXHDR(state);
+	char   *ptr = VARDATA(state);
 
 	CHECK_AGG_CONTEXT("trimmed_deserial_double", fcinfo);
 
@@ -723,9 +723,9 @@ Datum
 trimmed_deserial_int32(PG_FUNCTION_ARGS)
 {
 	state_int32 *out = (state_int32 *)palloc(sizeof(state_int32));
-	bytea  *data = (bytea *)PG_GETARG_POINTER(0);
-	Size	len = VARSIZE_ANY_EXHDR(data);
-	char   *ptr = VARDATA(data);
+	bytea  *state = (bytea *)PG_GETARG_POINTER(0);
+	Size	len = VARSIZE_ANY_EXHDR(state);
+	char   *ptr = VARDATA(state);
 
 	CHECK_AGG_CONTEXT("trimmed_deserial_int32", fcinfo);
 
@@ -751,9 +751,9 @@ Datum
 trimmed_deserial_int64(PG_FUNCTION_ARGS)
 {
 	state_int64 *out = (state_int64 *)palloc(sizeof(state_int64));
-	bytea  *data = (bytea *)PG_GETARG_POINTER(0);
-	Size	len = VARSIZE_ANY_EXHDR(data);
-	char   *ptr = VARDATA(data);
+	bytea  *state = (bytea *)PG_GETARG_POINTER(0);
+	Size	len = VARSIZE_ANY_EXHDR(state);
+	char   *ptr = VARDATA(state);
 
 	CHECK_AGG_CONTEXT("trimmed_deserial_int64", fcinfo);
 
@@ -779,9 +779,9 @@ Datum
 trimmed_deserial_numeric(PG_FUNCTION_ARGS)
 {
 	state_numeric *out = (state_numeric *)palloc(sizeof(state_numeric));
-	bytea  *data = (bytea *)PG_GETARG_POINTER(0);
-	Size	len = VARSIZE_ANY_EXHDR(data);
-	char   *ptr = VARDATA(data);
+	bytea  *state = (bytea *)PG_GETARG_POINTER(0);
+	Size	len = VARSIZE_ANY_EXHDR(state);
+	char   *ptr = VARDATA(state);
 
 	CHECK_AGG_CONTEXT("trimmed_deserial_numeric", fcinfo);
 
@@ -803,81 +803,81 @@ trimmed_combine_double(PG_FUNCTION_ARGS)
 {
 	int i, j, k;
 	double *tmp;
-	state_double *data1;
-	state_double *data2;
+	state_double *state1;
+	state_double *state2;
 	MemoryContext agg_context;
 	MemoryContext old_context;
 
 	GET_AGG_CONTEXT("trimmed_combine_double", fcinfo, agg_context);
 
-	data1 = PG_ARGISNULL(0) ? NULL : (state_double *) PG_GETARG_POINTER(0);
-	data2 = PG_ARGISNULL(1) ? NULL : (state_double *) PG_GETARG_POINTER(1);
+	state1 = PG_ARGISNULL(0) ? NULL : (state_double *) PG_GETARG_POINTER(0);
+	state2 = PG_ARGISNULL(1) ? NULL : (state_double *) PG_GETARG_POINTER(1);
 
-	if (data2 == NULL)
-		PG_RETURN_POINTER(data1);
+	if (state2 == NULL)
+		PG_RETURN_POINTER(state1);
 
-	if (data1 == NULL)
+	if (state1 == NULL)
 	{
 		old_context = MemoryContextSwitchTo(agg_context);
 
-		data1 = (state_double *)palloc(sizeof(state_double));
-		data1->maxelements = data2->maxelements;
-		data1->nelements = data2->nelements;
+		state1 = (state_double *)palloc(sizeof(state_double));
+		state1->maxelements = state2->maxelements;
+		state1->nelements = state2->nelements;
 
-		data1->cut_lower = data2->cut_lower;
-		data1->cut_upper = data2->cut_upper;
-		data1->sorted = data2->sorted;
+		state1->cut_lower = state2->cut_lower;
+		state1->cut_upper = state2->cut_upper;
+		state1->sorted = state2->sorted;
 
-		data1->elements = (double*)palloc(sizeof(double) * data2->maxelements);
+		state1->elements = (double*)palloc(sizeof(double) * state2->maxelements);
 
-		memcpy(data1->elements, data2->elements, sizeof(double) * data2->maxelements);
+		memcpy(state1->elements, state2->elements, sizeof(double) * state2->maxelements);
 
 		MemoryContextSwitchTo(old_context);
 
 		/* free the internal state */
-		pfree(data2->elements);
-		data2->elements = NULL;
+		pfree(state2->elements);
+		state2->elements = NULL;
 
-		PG_RETURN_POINTER(data1);
+		PG_RETURN_POINTER(state1);
 	}
 
-	Assert((data1 != NULL) && (data2 != NULL));
-	Assert(data1->sorted && data2->sorted);
+	Assert((state1 != NULL) && (state2 != NULL));
+	Assert(state1->sorted && state2->sorted);
 
 	tmp = (double*)MemoryContextAlloc(agg_context,
-					  sizeof(double) * (data1->nelements + data2->nelements));
+					  sizeof(double) * (state1->nelements + state2->nelements));
 
 	/* merge the two arrays */
 	i = j = k = 0;
 	while (true)
 	{
-		if ((i < data1->nelements) && (j < data2->nelements))
+		if ((i < state1->nelements) && (j < state2->nelements))
 		{
-			if (data1->elements[i] <= data2->elements[j])
-				tmp[k++] = data1->elements[i++];
+			if (state1->elements[i] <= state2->elements[j])
+				tmp[k++] = state1->elements[i++];
 			else
-				tmp[k++] = data2->elements[j++];
+				tmp[k++] = state2->elements[j++];
 		}
-		else if (i < data1->nelements)
-			tmp[k++] = data1->elements[i++];
-		else if (j < data2->nelements)
-			tmp[k++] = data2->elements[j++];
+		else if (i < state1->nelements)
+			tmp[k++] = state1->elements[i++];
+		else if (j < state2->nelements)
+			tmp[k++] = state2->elements[j++];
 		else
 			/* no more elements to process */
 			break;
 	}
 
 	/* free the two arrays */
-	pfree(data1->elements);
-	pfree(data2->elements);
+	pfree(state1->elements);
+	pfree(state2->elements);
 
-	data1->elements = tmp;
+	state1->elements = tmp;
 
 	/* and finally remember the current number of elements */
-	data1->nelements += data2->nelements;
-	data1->maxelements = data1->nelements;
+	state1->nelements += state2->nelements;
+	state1->maxelements = state1->nelements;
 
-	PG_RETURN_POINTER(data1);
+	PG_RETURN_POINTER(state1);
 }
 
 Datum
@@ -885,80 +885,80 @@ trimmed_combine_int32(PG_FUNCTION_ARGS)
 {
 	int i, j, k;
 	int32 *tmp;
-	state_int32 *data1;
-	state_int32 *data2;
+	state_int32 *state1;
+	state_int32 *state2;
 	MemoryContext agg_context;
 	MemoryContext old_context;
 
 	GET_AGG_CONTEXT("trimmed_combine_int32", fcinfo, agg_context);
 
-	data1 = PG_ARGISNULL(0) ? NULL : (state_int32 *) PG_GETARG_POINTER(0);
-	data2 = PG_ARGISNULL(1) ? NULL : (state_int32 *) PG_GETARG_POINTER(1);
+	state1 = PG_ARGISNULL(0) ? NULL : (state_int32 *) PG_GETARG_POINTER(0);
+	state2 = PG_ARGISNULL(1) ? NULL : (state_int32 *) PG_GETARG_POINTER(1);
 
-	if (data2 == NULL)
-		PG_RETURN_POINTER(data1);
+	if (state2 == NULL)
+		PG_RETURN_POINTER(state1);
 
-	if (data1 == NULL)
+	if (state1 == NULL)
 	{
 		old_context = MemoryContextSwitchTo(agg_context);
 
-		data1 = (state_int32 *)palloc(sizeof(state_int32));
-		data1->maxelements = data2->maxelements;
-		data1->nelements = data2->nelements;
+		state1 = (state_int32 *)palloc(sizeof(state_int32));
+		state1->maxelements = state2->maxelements;
+		state1->nelements = state2->nelements;
 
-		data1->cut_lower = data2->cut_lower;
-		data1->cut_upper = data2->cut_upper;
+		state1->cut_lower = state2->cut_lower;
+		state1->cut_upper = state2->cut_upper;
 
-		data1->elements = (int32*)palloc(sizeof(int32) * data2->maxelements);
+		state1->elements = (int32*)palloc(sizeof(int32) * state2->maxelements);
 
-		memcpy(data1->elements, data2->elements, sizeof(int32) * data2->maxelements);
+		memcpy(state1->elements, state2->elements, sizeof(int32) * state2->maxelements);
 
 		MemoryContextSwitchTo(old_context);
 
 		/* free the internal state */
-		pfree(data2->elements);
-		data2->elements = NULL;
+		pfree(state2->elements);
+		state2->elements = NULL;
 
-		PG_RETURN_POINTER(data1);
+		PG_RETURN_POINTER(state1);
 	}
 
-	Assert((data1 != NULL) && (data2 != NULL));
-	Assert(data1->sorted && data2->sorted);
+	Assert((state1 != NULL) && (state2 != NULL));
+	Assert(state1->sorted && state2->sorted);
 
 	tmp = (int32*)MemoryContextAlloc(agg_context,
-					  sizeof(int32) * (data1->nelements + data2->nelements));
+					  sizeof(int32) * (state1->nelements + state2->nelements));
 
 	/* merge the two arrays */
 	i = j = k = 0;
 	while (true)
 	{
-		if ((i < data1->nelements) && (j < data2->nelements))
+		if ((i < state1->nelements) && (j < state2->nelements))
 		{
-			if (data1->elements[i] <= data2->elements[j])
-				tmp[k++] = data1->elements[i++];
+			if (state1->elements[i] <= state2->elements[j])
+				tmp[k++] = state1->elements[i++];
 			else
-				tmp[k++] = data2->elements[j++];
+				tmp[k++] = state2->elements[j++];
 		}
-		else if (i < data1->nelements)
-			tmp[k++] = data1->elements[i++];
-		else if (j < data2->nelements)
-			tmp[k++] = data2->elements[j++];
+		else if (i < state1->nelements)
+			tmp[k++] = state1->elements[i++];
+		else if (j < state2->nelements)
+			tmp[k++] = state2->elements[j++];
 		else
 			/* no more elements to process */
 			break;
 	}
 
 	/* free the two arrays */
-	pfree(data1->elements);
-	pfree(data2->elements);
+	pfree(state1->elements);
+	pfree(state2->elements);
 
-	data1->elements = tmp;
+	state1->elements = tmp;
 
 	/* and finally remember the current number of elements */
-	data1->nelements += data2->nelements;
-	data1->maxelements = data1->nelements;
+	state1->nelements += state2->nelements;
+	state1->maxelements = state1->nelements;
 
-	PG_RETURN_POINTER(data1);
+	PG_RETURN_POINTER(state1);
 }
 
 Datum
@@ -966,135 +966,135 @@ trimmed_combine_int64(PG_FUNCTION_ARGS)
 {
 	int i, j, k;
 	int64 *tmp;
-	state_int64 *data1;
-	state_int64 *data2;
+	state_int64 *state1;
+	state_int64 *state2;
 	MemoryContext agg_context;
 	MemoryContext old_context;
 
 	GET_AGG_CONTEXT("trimmed_combine_int64", fcinfo, agg_context);
 
-	data1 = PG_ARGISNULL(0) ? NULL : (state_int64 *) PG_GETARG_POINTER(0);
-	data2 = PG_ARGISNULL(1) ? NULL : (state_int64 *) PG_GETARG_POINTER(1);
+	state1 = PG_ARGISNULL(0) ? NULL : (state_int64 *) PG_GETARG_POINTER(0);
+	state2 = PG_ARGISNULL(1) ? NULL : (state_int64 *) PG_GETARG_POINTER(1);
 
-	if (data2 == NULL)
-		PG_RETURN_POINTER(data1);
+	if (state2 == NULL)
+		PG_RETURN_POINTER(state1);
 
-	if (data1 == NULL)
+	if (state1 == NULL)
 	{
 		old_context = MemoryContextSwitchTo(agg_context);
 
-		data1 = (state_int64 *)palloc(sizeof(state_int64));
-		data1->maxelements = data2->maxelements;
-		data1->nelements = data2->nelements;
+		state1 = (state_int64 *)palloc(sizeof(state_int64));
+		state1->maxelements = state2->maxelements;
+		state1->nelements = state2->nelements;
 
-		data1->cut_lower = data2->cut_lower;
-		data1->cut_upper = data2->cut_upper;
+		state1->cut_lower = state2->cut_lower;
+		state1->cut_upper = state2->cut_upper;
 
-		data1->elements = (int64*)palloc(sizeof(int64) * data2->maxelements);
+		state1->elements = (int64*)palloc(sizeof(int64) * state2->maxelements);
 
-		memcpy(data1->elements, data2->elements, sizeof(int64) * data2->maxelements);
+		memcpy(state1->elements, state2->elements, sizeof(int64) * state2->maxelements);
 
 		MemoryContextSwitchTo(old_context);
 
 		/* free the internal state */
-		pfree(data2->elements);
-		data2->elements = NULL;
+		pfree(state2->elements);
+		state2->elements = NULL;
 
-		PG_RETURN_POINTER(data1);
+		PG_RETURN_POINTER(state1);
 	}
 
-	Assert((data1 != NULL) && (data2 != NULL));
-	Assert(data1->sorted && data2->sorted);
+	Assert((state1 != NULL) && (state2 != NULL));
+	Assert(state1->sorted && state2->sorted);
 
 	tmp = (int64*)MemoryContextAlloc(agg_context,
-					  sizeof(int64) * (data1->nelements + data2->nelements));
+					  sizeof(int64) * (state1->nelements + state2->nelements));
 
 	/* merge the two arrays */
 	i = j = k = 0;
 	while (true)
 	{
-		if ((i < data1->nelements) && (j < data2->nelements))
+		if ((i < state1->nelements) && (j < state2->nelements))
 		{
-			if (data1->elements[i] <= data2->elements[j])
-				tmp[k++] = data1->elements[i++];
+			if (state1->elements[i] <= state2->elements[j])
+				tmp[k++] = state1->elements[i++];
 			else
-				tmp[k++] = data2->elements[j++];
+				tmp[k++] = state2->elements[j++];
 		}
-		else if (i < data1->nelements)
-			tmp[k++] = data1->elements[i++];
-		else if (j < data2->nelements)
-			tmp[k++] = data2->elements[j++];
+		else if (i < state1->nelements)
+			tmp[k++] = state1->elements[i++];
+		else if (j < state2->nelements)
+			tmp[k++] = state2->elements[j++];
 		else
 			/* no more elements to process */
 			break;
 	}
 
 	/* free the two arrays */
-	pfree(data1->elements);
-	pfree(data2->elements);
+	pfree(state1->elements);
+	pfree(state2->elements);
 
-	data1->elements = tmp;
+	state1->elements = tmp;
 
 	/* and finally remember the current number of elements */
-	data1->nelements += data2->nelements;
-	data1->maxelements = data1->nelements;
+	state1->nelements += state2->nelements;
+	state1->maxelements = state1->nelements;
 
-	PG_RETURN_POINTER(data1);
+	PG_RETURN_POINTER(state1);
 }
 
 Datum
 trimmed_combine_numeric(PG_FUNCTION_ARGS)
 {
 	int				i;
-	state_numeric *data1;
-	state_numeric *data2;
+	state_numeric *state1;
+	state_numeric *state2;
 	MemoryContext agg_context;
 
 	char		   *data, *tmp, *ptr1, *ptr2;
 
 	GET_AGG_CONTEXT("trimmed_combine_numeric", fcinfo, agg_context);
 
-	data1 = PG_ARGISNULL(0) ? NULL : (state_numeric *) PG_GETARG_POINTER(0);
-	data2 = PG_ARGISNULL(1) ? NULL : (state_numeric *) PG_GETARG_POINTER(1);
+	state1 = PG_ARGISNULL(0) ? NULL : (state_numeric *) PG_GETARG_POINTER(0);
+	state2 = PG_ARGISNULL(1) ? NULL : (state_numeric *) PG_GETARG_POINTER(1);
 
-	if (data2 == NULL)
-		PG_RETURN_POINTER(data1);
+	if (state2 == NULL)
+		PG_RETURN_POINTER(state1);
 
-	if (data1 == NULL)
+	if (state1 == NULL)
 	{
-		data1 = (state_numeric *)MemoryContextAlloc(agg_context,
+		state1 = (state_numeric *)MemoryContextAlloc(agg_context,
 													sizeof(state_numeric));
 
-		data1->nelements = data2->nelements;
-		data1->cut_lower = data2->cut_lower;
-		data1->cut_upper = data2->cut_upper;
-		data1->usedlen = data2->usedlen;
-		data1->maxlen = data2->maxlen;
+		state1->nelements = state2->nelements;
+		state1->cut_lower = state2->cut_lower;
+		state1->cut_upper = state2->cut_upper;
+		state1->usedlen = state2->usedlen;
+		state1->maxlen = state2->maxlen;
 
 		/* copy the buffer */
-		data1->data = MemoryContextAlloc(agg_context, data1->usedlen);
-		memcpy(data1->data, data2->data, data1->usedlen);
+		state1->data = MemoryContextAlloc(agg_context, state1->usedlen);
+		memcpy(state1->data, state2->data, state1->usedlen);
 
-		PG_RETURN_POINTER(data1);
+		PG_RETURN_POINTER(state1);
 	}
 
 	/* allocate temporary arrays */
-	data = MemoryContextAlloc(agg_context, data1->usedlen + data2->usedlen);
+	data = MemoryContextAlloc(agg_context, state1->usedlen + state2->usedlen);
 	tmp = data;
 
 	/* merge the two arrays */
-	ptr1 = data1->data;
-	ptr2 = data2->data;
+	ptr1 = state1->data;
+	ptr2 = state2->data;
 
-	for (i = 0; i < data1->nelements + data2->nelements; i++)
+	for (i = 0; i < state1->nelements + state2->nelements; i++)
 	{
 		Numeric element;
 
-		Assert(ptr1 <= (data1->data + data1->usedlen));
-		Assert(ptr2 <= (data2->data + data2->usedlen));
+		Assert(ptr1 <= (state1->data + state1->usedlen));
+		Assert(ptr2 <= (state2->data + state2->usedlen));
 
-		if ((ptr1 < (data1->data + data1->usedlen)) &&
-			(ptr2 < (data2->data + data2->usedlen)))
+		if ((ptr1 < (state1->data + state1->usedlen)) &&
+			(ptr2 < (state2->data + state2->usedlen)))
 		{
 			if (numeric_comparator(&ptr1, &ptr2) <= 0)
 			{
@@ -1107,12 +1107,12 @@ trimmed_combine_numeric(PG_FUNCTION_ARGS)
 				ptr2 += VARSIZE(ptr2);
 			}
 		}
-		else if (ptr1 < (data1->data + data1->usedlen))
+		else if (ptr1 < (state1->data + state1->usedlen))
 		{
 			element = (Numeric)ptr1;
 			ptr1 += VARSIZE(ptr1);
 		}
-		else if (ptr2 < (data2->data + data2->usedlen))
+		else if (ptr2 < (state2->data + state2->usedlen))
 		{
 			element = (Numeric)ptr2;
 			ptr2 += VARSIZE(ptr2);
@@ -1125,21 +1125,21 @@ trimmed_combine_numeric(PG_FUNCTION_ARGS)
 		tmp += VARSIZE(element);
 	}
 
-	Assert(ptr1 == (data1->data + data1->usedlen));
-	Assert(ptr2 == (data2->data + data2->usedlen));
-	Assert((tmp - data) == (data1->usedlen + data2->usedlen));
+	Assert(ptr1 == (state1->data + state1->usedlen));
+	Assert(ptr2 == (state2->data + state2->usedlen));
+	Assert((tmp - data) == (state1->usedlen + state2->usedlen));
 
 	/* free the two arrays */
-	pfree(data1->data);
-	pfree(data2->data);
+	pfree(state1->data);
+	pfree(state2->data);
 
-	data1->data = data;
+	state1->data = data;
 
 	/* and finally remember the current number of elements */
-	data1->nelements += data2->nelements;
-	data1->usedlen += data2->usedlen;
+	state1->nelements += state2->nelements;
+	state1->usedlen += state2->usedlen;
 
-	PG_RETURN_POINTER(data1);
+	PG_RETURN_POINTER(state1);
 }
 
 Datum
@@ -1148,27 +1148,27 @@ trimmed_avg_double(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0;
 
-	state_double *data;
+	state_double *state;
 
 	CHECK_AGG_CONTEXT("trimmed_avg_double", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_double*)PG_GETARG_POINTER(0);
+	state = (state_double*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
-		result = result + data->elements[i];
+		result = result + state->elements[i];
 
 	PG_RETURN_FLOAT8(result/cnt);
 }
@@ -1182,24 +1182,24 @@ trimmed_double_array(PG_FUNCTION_ARGS)
 	/* average, var_pop, var_samp, variance, stddev_pop, stddev_samp, stddev */
 	double  result[7] = {0, 0, 0, 0, 0, 0, 0};
 
-	state_double *data;
+	state_double *state;
 
 	CHECK_AGG_CONTEXT("trimmed_double_array", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_double*)PG_GETARG_POINTER(0);
+	state = (state_double*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(double), &double_comparator);
 
 	/* average */
 	result[0] = 0;
@@ -1208,9 +1208,9 @@ trimmed_double_array(PG_FUNCTION_ARGS)
 
 	for (i = from; i < to; i++)
 	{
-		result[0] += data->elements[i];
-		sum_x = sum_x + data->elements[i];
-		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+		result[0] += state->elements[i];
+		sum_x = sum_x + state->elements[i];
+		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
 	result[0] /= cnt;
@@ -1220,7 +1220,7 @@ trimmed_double_array(PG_FUNCTION_ARGS)
 	/* variance */
 	result[3] = 0;
 	for (i = from; i < to; i++)
-		result[3] += (data->elements[i] - result[0]) * (data->elements[i] - result[0]);
+		result[3] += (state->elements[i] - result[0]) * (state->elements[i] - result[0]);
 
 	result[3] /= cnt;
 	result[4] = sqrt(result[1]); /* stddev_pop */
@@ -1236,27 +1236,27 @@ trimmed_avg_int32(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0;
 
-	state_int32 *data;
+	state_int32 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_avg_int32", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int32*)PG_GETARG_POINTER(0);
+	state = (state_int32*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
-		result = result + (double)data->elements[i];
+		result = result + (double)state->elements[i];
 
 	PG_RETURN_FLOAT8(result/cnt);
 }
@@ -1270,24 +1270,24 @@ trimmed_int32_array(PG_FUNCTION_ARGS)
 	/* average, var_pop, var_samp, variance, stddev_pop, stddev_samp, stddev */
 	double	result[7] = {0, 0, 0, 0, 0, 0, 0};
 
-	state_int32 *data;
+	state_int32 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_int32_array", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int32*)PG_GETARG_POINTER(0);
+	state = (state_int32*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int32), &int32_comparator);
 
 	/* average */
 	result[0] = 0;
@@ -1296,9 +1296,9 @@ trimmed_int32_array(PG_FUNCTION_ARGS)
 
 	for (i = from; i < to; i++)
 	{
-		result[0] += (double)data->elements[i];
-		sum_x = sum_x + data->elements[i];
-		sum_x2 = sum_x2 + ((double)data->elements[i])*((double)data->elements[i]);
+		result[0] += (double)state->elements[i];
+		sum_x = sum_x + state->elements[i];
+		sum_x2 = sum_x2 + ((double)state->elements[i])*((double)state->elements[i]);
 	}
 
 	result[0] /= cnt;
@@ -1308,7 +1308,7 @@ trimmed_int32_array(PG_FUNCTION_ARGS)
 	/* variance */
 	result[3] = 0;
 	for (i = from; i < to; i++)
-		result[3] += ((double)data->elements[i] - result[0])*((double)data->elements[i] - result[0]);
+		result[3] += ((double)state->elements[i] - result[0])*((double)state->elements[i] - result[0]);
 
 	result[3] /= cnt;
 	result[4] = sqrt(result[1]); /* stddev_pop */
@@ -1324,27 +1324,27 @@ trimmed_avg_int64(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0;
 
-	state_int64 *data;
+	state_int64 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_avg_int64", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int64*)PG_GETARG_POINTER(0);
+	state = (state_int64*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
-		result = result + (double)data->elements[i];
+		result = result + (double)state->elements[i];
 
 	PG_RETURN_FLOAT8(result/cnt);
 }
@@ -1358,24 +1358,24 @@ trimmed_int64_array(PG_FUNCTION_ARGS)
 	/* average, var_pop, var_samp, variance, stddev_pop, stddev_samp, stddev */
 	double	result[7] = {0, 0, 0, 0, 0, 0, 0};
 
-	state_int64 *data;
+	state_int64 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_int64_array", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int64*)PG_GETARG_POINTER(0);
+	state = (state_int64*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int64), &int64_comparator);
 
 	/* average */
 	result[0] = 0;
@@ -1384,9 +1384,9 @@ trimmed_int64_array(PG_FUNCTION_ARGS)
 
 	for (i = from; i < to; i++)
 	{
-		result[0] += (double)data->elements[i];
-		sum_x = sum_x + data->elements[i];
-		sum_x2 = sum_x2 + ((double)data->elements[i])*((double)data->elements[i]);
+		result[0] += (double)state->elements[i];
+		sum_x = sum_x + state->elements[i];
+		sum_x2 = sum_x2 + ((double)state->elements[i])*((double)state->elements[i]);
 	}
 
 	result[0] /= cnt;
@@ -1396,7 +1396,7 @@ trimmed_int64_array(PG_FUNCTION_ARGS)
 	/* variance */
 	result[3] = 0;
 	for (i = from; i < to; i++)
-		result[3] += ((double)data->elements[i] - result[0])*((double)data->elements[i] - result[0]);
+		result[3] += ((double)state->elements[i] - result[0])*((double)state->elements[i] - result[0]);
 
 	result[3] /= cnt;
 	result[4] = sqrt(result[1]); /* stddev_pop */
@@ -1413,17 +1413,17 @@ trimmed_avg_numeric(PG_FUNCTION_ARGS)
 	Numeric	result, cnt;
 	Numeric *elements;
 
-	state_numeric *data;
+	state_numeric *state;
 
 	CHECK_AGG_CONTEXT("trimmed_avg_numeric", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_numeric*)PG_GETARG_POINTER(0);
+	state = (state_numeric*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -1432,10 +1432,10 @@ trimmed_avg_numeric(PG_FUNCTION_ARGS)
 	cnt	= create_numeric(to-from);
 	result = create_numeric(0);
 
-	elements = build_numeric_elements(data);
+	elements = build_numeric_elements(state);
 
-	if (! data->sorted)
-		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	if (! state->sorted)
+		pg_qsort(elements, state->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 		result = add_numeric(result, div_numeric(elements[i], cnt));
@@ -1457,17 +1457,17 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 	Numeric	cntNumeric, cntNumeric_1;
 	Numeric *elements;
 
-	state_numeric *data;
+	state_numeric *state;
 
 	CHECK_AGG_CONTEXT("trimmed_numeric_array", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_numeric*)PG_GETARG_POINTER(0);
+	state = (state_numeric*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -1476,10 +1476,10 @@ trimmed_numeric_array(PG_FUNCTION_ARGS)
 	cntNumeric = create_numeric(to-from);
 	cntNumeric_1 = create_numeric(to-from-1);
 
-	elements = build_numeric_elements(data);
+	elements = build_numeric_elements(state);
 
-	if (! data->sorted)
-		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	if (! state->sorted)
+		pg_qsort(elements, state->nelements, sizeof(Numeric), &numeric_comparator);
 
 	/* average */
 	result[0] = create_numeric(0);
@@ -1542,31 +1542,31 @@ trimmed_var_double(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0, avg = 0;
 
-	state_double *data;
+	state_double *state;
 
 	CHECK_AGG_CONTEXT("trimmed_var_double", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_double*)PG_GETARG_POINTER(0);
+	state = (state_double*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
-		avg = avg + data->elements[i];
+		avg = avg + state->elements[i];
 	avg /= cnt;
 
 	for (i = from; i < to; i++)
-		result = result + (data->elements[i] - avg)*(data->elements[i] - avg);
+		result = result + (state->elements[i] - avg)*(state->elements[i] - avg);
 
 	PG_RETURN_FLOAT8(result/cnt);
 }
@@ -1578,31 +1578,31 @@ trimmed_var_int32(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0, avg = 0;
 
-	state_int32 *data;
+	state_int32 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_var_int32", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int32*)PG_GETARG_POINTER(0);
+	state = (state_int32*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
-		avg = avg + (double)data->elements[i];
+		avg = avg + (double)state->elements[i];
 	avg /= cnt;
 
 	for (i = from; i < to; i++)
-		result = result + (data->elements[i] - avg)*(data->elements[i] - avg);
+		result = result + (state->elements[i] - avg)*(state->elements[i] - avg);
 
 	PG_RETURN_FLOAT8(result/cnt);
 }
@@ -1613,31 +1613,31 @@ trimmed_var_int64(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0, avg = 0;
 
-	state_int64 *data;
+	state_int64 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_var_int64", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int64*)PG_GETARG_POINTER(0);
+	state = (state_int64*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
-		avg = avg + (double)data->elements[i];
+		avg = avg + (double)state->elements[i];
 	avg /= cnt;
 
 	for (i = from; i < to; i++)
-		result = result + (data->elements[i] - avg)*(data->elements[i] - avg);
+		result = result + (state->elements[i] - avg)*(state->elements[i] - avg);
 
 	PG_RETURN_FLOAT8(result/cnt);
 }
@@ -1649,17 +1649,17 @@ trimmed_var_numeric(PG_FUNCTION_ARGS)
 	Numeric	result, avg, cnt;
 	Numeric *elements;
 
-	state_numeric *data;
+	state_numeric *state;
 
 	CHECK_AGG_CONTEXT("trimmed_var_numeric", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_numeric*)PG_GETARG_POINTER(0);
+	state = (state_numeric*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -1668,10 +1668,10 @@ trimmed_var_numeric(PG_FUNCTION_ARGS)
 	avg = create_numeric(0);
 	result = create_numeric(0);
 
-	elements = build_numeric_elements(data);
+	elements = build_numeric_elements(state);
 
-	if (! data->sorted)
-		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	if (! state->sorted)
+		pg_qsort(elements, state->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 		avg = add_numeric(avg, div_numeric(elements[i], cnt));
@@ -1694,28 +1694,28 @@ trimmed_var_pop_double(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_double *data;
+	state_double *state;
 
 	CHECK_AGG_CONTEXT("trimmed_var_pop_double", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_double*)PG_GETARG_POINTER(0);
+	state = (state_double*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	pg_qsort(state->elements, state->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = sum_x + data->elements[i];
-		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+		sum_x = sum_x + state->elements[i];
+		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
 	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt));
@@ -1727,29 +1727,29 @@ trimmed_var_pop_int32(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_int32 *data;
+	state_int32 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_var_pop_int32", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int32*)PG_GETARG_POINTER(0);
+	state = (state_int32*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = sum_x + data->elements[i];
-		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+		sum_x = sum_x + state->elements[i];
+		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
 	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt));
@@ -1761,29 +1761,29 @@ trimmed_var_pop_int64(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double  sum_x = 0, sum_x2 = 0;
 
-	state_int64 *data;
+	state_int64 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_var_pop_int64", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int64*)PG_GETARG_POINTER(0);
+	state = (state_int64*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = sum_x + data->elements[i];
-		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+		sum_x = sum_x + state->elements[i];
+		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
 	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt));
@@ -1796,17 +1796,17 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 	Numeric	sum_x, sum_x2, cnt;
 	Numeric *elements;
 
-	state_numeric *data;
+	state_numeric *state;
 
 	CHECK_AGG_CONTEXT("trimmed_var_pop_numeric", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_numeric*)PG_GETARG_POINTER(0);
+	state = (state_numeric*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -1815,10 +1815,10 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 	sum_x = create_numeric(0);
 	sum_x2 = create_numeric(0);
 
-	elements = build_numeric_elements(data);
+	elements = build_numeric_elements(state);
 
-	if (! data->sorted)
-		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	if (! state->sorted)
+		pg_qsort(elements, state->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1843,29 +1843,29 @@ trimmed_var_samp_double(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_double *data;
+	state_double *state;
 
 	CHECK_AGG_CONTEXT("trimmed_var_samp_double", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_double*)PG_GETARG_POINTER(0);
+	state = (state_double*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = sum_x + data->elements[i];
-		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+		sum_x = sum_x + state->elements[i];
+		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
 	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)));
@@ -1877,29 +1877,29 @@ trimmed_var_samp_int32(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_int32 *data;
+	state_int32 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_var_samp_int32", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int32*)PG_GETARG_POINTER(0);
+	state = (state_int32*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = sum_x + data->elements[i];
-		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+		sum_x = sum_x + state->elements[i];
+		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
 	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)));
@@ -1911,29 +1911,29 @@ trimmed_var_samp_int64(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_int64 *data;
+	state_int64 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_var_samp_int64", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int64*)PG_GETARG_POINTER(0);
+	state = (state_int64*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = sum_x + data->elements[i];
-		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+		sum_x = sum_x + state->elements[i];
+		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
 	PG_RETURN_FLOAT8 ((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1)));
@@ -1946,17 +1946,17 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 	Numeric	sum_x, sum_x2, cnt;
 	Numeric *elements;
 
-	state_numeric *data;
+	state_numeric *state;
 
 	CHECK_AGG_CONTEXT("trimmed_var_samp_numeric", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_numeric*)PG_GETARG_POINTER(0);
+	state = (state_numeric*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -1965,10 +1965,10 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 	sum_x = create_numeric(0);
 	sum_x2 = create_numeric(0);
 
-	elements = build_numeric_elements(data);
+	elements = build_numeric_elements(state);
 
-	if (! data->sorted)
-		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	if (! state->sorted)
+		pg_qsort(elements, state->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -1996,31 +1996,31 @@ trimmed_stddev_double(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0, avg = 0;
 
-	state_double *data;
+	state_double *state;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_double", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_double*)PG_GETARG_POINTER(0);
+	state = (state_double*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
-		avg = avg + data->elements[i];
+		avg = avg + state->elements[i];
 	avg /= cnt;
 
 	for (i = from; i < to; i++)
-		result = result + (data->elements[i] - avg)*(data->elements[i] - avg);
+		result = result + (state->elements[i] - avg)*(state->elements[i] - avg);
 
 	PG_RETURN_FLOAT8 (sqrt(result)/cnt);
 }
@@ -2031,31 +2031,31 @@ trimmed_stddev_int32(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0, avg = 0;
 
-	state_int32 *data;
+	state_int32 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_int32", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int32*)PG_GETARG_POINTER(0);
+	state = (state_int32*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
-		avg = avg + (double)data->elements[i];
+		avg = avg + (double)state->elements[i];
 	avg /= cnt;
 
 	for (i = from; i < to; i++)
-		result = result + (data->elements[i] - avg)*(data->elements[i] - avg);
+		result = result + (state->elements[i] - avg)*(state->elements[i] - avg);
 
 	PG_RETURN_FLOAT8 (sqrt(result)/cnt);
 }
@@ -2066,31 +2066,31 @@ trimmed_stddev_int64(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	result = 0, avg = 0;
 
-	state_int64 *data;
+	state_int64 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_int64", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int64*)PG_GETARG_POINTER(0);
+	state = (state_int64*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
-		avg = avg + (double)data->elements[i];
+		avg = avg + (double)state->elements[i];
 	avg /= cnt;
 
 	for (i = from; i < to; i++)
-		result = result + (data->elements[i] - avg)*(data->elements[i] - avg);
+		result = result + (state->elements[i] - avg)*(state->elements[i] - avg);
 
 	PG_RETURN_FLOAT8 (sqrt(result)/cnt);
 }
@@ -2102,17 +2102,17 @@ trimmed_stddev_numeric(PG_FUNCTION_ARGS)
 	Numeric	result, avg, cnt;
 	Numeric *elements;
 
-	state_numeric *data;
+	state_numeric *state;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_numeric", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_numeric*)PG_GETARG_POINTER(0);
+	state = (state_numeric*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -2121,10 +2121,10 @@ trimmed_stddev_numeric(PG_FUNCTION_ARGS)
 	avg = create_numeric(0);
 	result = create_numeric(0);
 
-	elements = build_numeric_elements(data);
+	elements = build_numeric_elements(state);
 
-	if (! data->sorted)
-		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	if (! state->sorted)
+		pg_qsort(elements, state->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 		avg = add_numeric(avg, div_numeric(elements[i], cnt));
@@ -2147,29 +2147,29 @@ trimmed_stddev_pop_double(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_double *data;
+	state_double *state;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_pop_double", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_double*)PG_GETARG_POINTER(0);
+	state = (state_double*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = sum_x + data->elements[i];
-		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+		sum_x = sum_x + state->elements[i];
+		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
 	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt)));
@@ -2181,29 +2181,29 @@ trimmed_stddev_pop_int32(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_int32 *data;
+	state_int32 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_pop_int32", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int32*)PG_GETARG_POINTER(0);
+	state = (state_int32*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = sum_x + data->elements[i];
-		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+		sum_x = sum_x + state->elements[i];
+		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
 	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt)));
@@ -2215,29 +2215,29 @@ trimmed_stddev_pop_int64(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_int64 *data;
+	state_int64 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_pop_int64", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int64*)PG_GETARG_POINTER(0);
+	state = (state_int64*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = sum_x + data->elements[i];
-		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+		sum_x = sum_x + state->elements[i];
+		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
 	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * cnt)));
@@ -2250,17 +2250,17 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 	Numeric	sum_x, sum_x2, cnt;
 	Numeric *elements;
 
-	state_numeric *data;
+	state_numeric *state;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_pop_numeric", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_numeric*)PG_GETARG_POINTER(0);
+	state = (state_numeric*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -2269,10 +2269,10 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 	sum_x = create_numeric(0);
 	sum_x2 = create_numeric(0);
 
-	elements = build_numeric_elements(data);
+	elements = build_numeric_elements(state);
 
-	if (! data->sorted)
-		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	if (! state->sorted)
+		pg_qsort(elements, state->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 	{
@@ -2298,29 +2298,29 @@ trimmed_stddev_samp_double(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_double *data;
+	state_double *state;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_samp_double", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_double*)PG_GETARG_POINTER(0);
+	state = (state_double*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(double), &double_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(double), &double_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = sum_x + data->elements[i];
-		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+		sum_x = sum_x + state->elements[i];
+		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
 	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1))));
@@ -2332,29 +2332,29 @@ trimmed_stddev_samp_int32(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_int32 *data;
+	state_int32 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_samp_int32", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int32*)PG_GETARG_POINTER(0);
+	state = (state_int32*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int32), &int32_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int32), &int32_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = sum_x + data->elements[i];
-		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+		sum_x = sum_x + state->elements[i];
+		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
 	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1))));
@@ -2366,29 +2366,29 @@ trimmed_stddev_samp_int64(PG_FUNCTION_ARGS)
 	int		i, from, to, cnt;
 	double	sum_x = 0, sum_x2 = 0;
 
-	state_int64 *data;
+	state_int64 *state;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_samp_int64", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_int64*)PG_GETARG_POINTER(0);
+	state = (state_int64*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 	cnt  = (to - from);
 
 	if (from >= to)
 		PG_RETURN_NULL();
 
-	if (! data->sorted)
-		pg_qsort(data->elements, data->nelements, sizeof(int64), &int64_comparator);
+	if (! state->sorted)
+		pg_qsort(state->elements, state->nelements, sizeof(int64), &int64_comparator);
 
 	for (i = from; i < to; i++)
 	{
-		sum_x = sum_x + data->elements[i];
-		sum_x2 = sum_x2 + data->elements[i]*data->elements[i];
+		sum_x = sum_x + state->elements[i];
+		sum_x2 = sum_x2 + state->elements[i]*state->elements[i];
 	}
 
 	PG_RETURN_FLOAT8 (sqrt((cnt * sum_x2 - sum_x * sum_x) / (cnt * (cnt - 1))));
@@ -2401,17 +2401,17 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 	Numeric	sum_x, sum_x2, cnt;
 	Numeric *elements;
 
-	state_numeric *data;
+	state_numeric *state;
 
 	CHECK_AGG_CONTEXT("trimmed_stddev_samp_numeric", fcinfo);
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	data = (state_numeric*)PG_GETARG_POINTER(0);
+	state = (state_numeric*)PG_GETARG_POINTER(0);
 
-	from = floor(data->nelements * data->cut_lower);
-	to   = data->nelements - floor(data->nelements * data->cut_upper);
+	from = floor(state->nelements * state->cut_lower);
+	to   = state->nelements - floor(state->nelements * state->cut_upper);
 
 	if (from >= to)
 		PG_RETURN_NULL();
@@ -2420,10 +2420,10 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 	sum_x = create_numeric(0);
 	sum_x2 = create_numeric(0);
 
-	elements = build_numeric_elements(data);
+	elements = build_numeric_elements(state);
 
-	if (! data->sorted)
-		pg_qsort(elements, data->nelements, sizeof(Numeric), &numeric_comparator);
+	if (! state->sorted)
+		pg_qsort(elements, state->nelements, sizeof(Numeric), &numeric_comparator);
 
 	for (i = from; i < to; i++)
 	{
