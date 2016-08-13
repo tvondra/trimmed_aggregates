@@ -72,8 +72,6 @@ PG_MODULE_MAGIC;
 /* how many elements to start with */
 #define MIN_ELEMENTS	32
 
-static Numeric const_zero = NULL;
-
 /* FIXME The final functions copy a lot of code - refactor to share. */
 
 /* Structures used to keep the data - the 'elements' array is extended
@@ -144,8 +142,6 @@ static void sort_state_double(state_double *state);
 static void sort_state_int32(state_int32 *state);
 static void sort_state_int64(state_int64 *state);
 static void sort_state_numeric(state_numeric *state);
-
-static Numeric *numeric_zero(void);
 
 static Datum
 double_to_array(FunctionCallInfo fcinfo, double * d, int len);
@@ -1250,7 +1246,7 @@ Datum
 trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 {
 	int		i, from, to;
-	Numeric	sum_x, sum_x2, cnt, numerator;
+	Numeric	sum_x, sum_x2, cnt;
 	char   *ptr;
 	state_numeric *state;
 
@@ -1288,17 +1284,20 @@ trimmed_var_pop_numeric(PG_FUNCTION_ARGS)
 		}
 	}
 
+	sum_x2 = mul_numeric(cnt, sum_x2);
+	sum_x = mul_numeric(sum_x, sum_x);
+
 	/* Watch out for roundoff error producing a negative numerator */
-	numerator = sub_numeric(
-					mul_numeric(cnt, sum_x2),
-					mul_numeric(sum_x, sum_x));
+	if (numeric_comparator(&sum_x2, &sum_x) <= 0)
+		PG_RETURN_NUMERIC(create_numeric(0));
 
-	if (numeric_comparator(&numerator, numeric_zero()) <= 0)
-		PG_RETURN_NUMERIC(const_zero);
-
-	PG_RETURN_NUMERIC (div_numeric(
-							numerator,
-							mul_numeric(cnt, cnt)));
+	PG_RETURN_NUMERIC (sub_numeric(
+							div_numeric(
+								sum_x2,
+								mul_numeric(cnt, cnt)),
+							div_numeric(
+								sum_x,
+								mul_numeric(cnt, cnt))));
 }
 
 Datum
@@ -1425,7 +1424,7 @@ Datum
 trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 {
 	int		i, from, to;
-	Numeric	sum_x, sum_x2, cnt, numerator;
+	Numeric	sum_x, sum_x2, cnt;
 	char   *ptr;
 	state_numeric *state;
 
@@ -1464,18 +1463,23 @@ trimmed_var_samp_numeric(PG_FUNCTION_ARGS)
 	}
 
 	/* Watch out for roundoff error producing a negative numerator */
-	numerator = sub_numeric(
-					mul_numeric(cnt, sum_x2),
-					mul_numeric(sum_x, sum_x));
+	sum_x2 = mul_numeric(cnt, sum_x2);
+	sum_x = mul_numeric(sum_x, sum_x);
 
-	if (numeric_comparator(&numerator, numeric_zero()) <= 0)
-		PG_RETURN_NUMERIC(const_zero);
+	if (numeric_comparator(&sum_x2, &sum_x) <= 0)
+		PG_RETURN_NUMERIC(create_numeric(0));
 
-	PG_RETURN_NUMERIC (div_numeric(
-							numerator,
-							mul_numeric(
-								cnt,
-								sub_numeric(cnt, create_numeric(1)))));
+	PG_RETURN_NUMERIC (sub_numeric(
+							div_numeric(
+								sum_x2,
+								mul_numeric(
+									cnt,
+									sub_numeric(cnt, create_numeric(1)))),
+							div_numeric(
+								sum_x,
+								mul_numeric(
+									cnt,
+									sub_numeric(cnt, create_numeric(1))))));
 }
 
 Datum
@@ -1769,7 +1773,7 @@ Datum
 trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 {
 	int		i, from, to;
-	Numeric	sum_x, sum_x2, cnt, numerator;
+	Numeric	sum_x, sum_x2, cnt;
 	char   *ptr;
 	state_numeric *state;
 
@@ -1807,17 +1811,20 @@ trimmed_stddev_pop_numeric(PG_FUNCTION_ARGS)
 	}
 
 	/* Watch out for roundoff error producing a negative numerator */
-	numerator = sub_numeric(
-						mul_numeric(cnt, sum_x2),
-						mul_numeric(sum_x, sum_x));
+	sum_x2 = mul_numeric(cnt, sum_x2);
+	sum_x = mul_numeric(sum_x, sum_x);
 
-	if (numeric_comparator(&numerator, numeric_zero()) <= 0)
-		PG_RETURN_NUMERIC(const_zero);
+	if (numeric_comparator(&sum_x2, &sum_x) <= 0)
+		PG_RETURN_NUMERIC(create_numeric(0));
 
 	PG_RETURN_NUMERIC (sqrt_numeric(
-							div_numeric(
-								numerator,
-								pow_numeric(cnt, 2))));
+							sub_numeric(
+								div_numeric(
+									sum_x2,
+									pow_numeric(cnt, 2)),
+								div_numeric(
+									sum_x,
+									pow_numeric(cnt, 2)))));
 }
 
 Datum
@@ -1944,7 +1951,7 @@ Datum
 trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 {
 	int		i, from, to;
-	Numeric	sum_x, sum_x2, cnt, numerator;
+	Numeric	sum_x, sum_x2, cnt;
 	char   *ptr;
 	state_numeric *state;
 
@@ -1981,19 +1988,24 @@ trimmed_stddev_samp_numeric(PG_FUNCTION_ARGS)
 	}
 
 	/* Watch out for roundoff error producing a negative numerator */
-	numerator = sub_numeric(
-						mul_numeric(cnt, sum_x2),
-						pow_numeric(sum_x, 2));
+	sum_x2 = mul_numeric(cnt, sum_x2);
+	sum_x = pow_numeric(sum_x, 2);
 
-	if (numeric_comparator(&numerator, numeric_zero()) <= 0)
-		PG_RETURN_NUMERIC(const_zero);
+	if (numeric_comparator(&sum_x2, &sum_x) <= 0)
+		PG_RETURN_NUMERIC(create_numeric(0));
 
 	PG_RETURN_NUMERIC (sqrt_numeric(
-							div_numeric(
-								numerator,
-								mul_numeric(
-									cnt,
-									sub_numeric(cnt, create_numeric(1))))));
+							sub_numeric(
+								div_numeric(
+									sum_x2,
+									mul_numeric(
+										cnt,
+										sub_numeric(cnt, create_numeric(1)))),
+								div_numeric(
+									sum_x,
+									mul_numeric(
+										cnt,
+										sub_numeric(cnt, create_numeric(1)))))));
 }
 
 static int
@@ -2144,29 +2156,6 @@ sqrt_numeric(Numeric a)
 	return DatumGetNumeric(numeric_sqrt(&fcinfo));
 }
 
-static Numeric *
-numeric_zero()
-{
-	Datum d;
-
-	if (const_zero != NULL)
-		return &const_zero;
-
-	d = DirectFunctionCall1(
-			numeric_in,
-			DirectFunctionCall1(
-				int4out,
-				Int32GetDatum(0)
-			)
-		);
-
-	/* we need to copy the value to TopMemoryContext */
-	const_zero = (Numeric)MemoryContextAlloc(TopMemoryContext, VARSIZE(d));
-
-	memcpy(const_zero, DatumGetPointer(d), VARSIZE(d));
-
-	return &const_zero;
-}
 
 /*
  * Helper functions used to prepare the resulting array (when there's
