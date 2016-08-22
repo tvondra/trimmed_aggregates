@@ -815,10 +815,6 @@ trimmed_combine_double(PG_FUNCTION_ARGS)
 
 		MemoryContextSwitchTo(old_context);
 
-		/* free the internal state */
-		pfree(state2->elements);
-		state2->elements = NULL;
-
 		PG_RETURN_POINTER(state1);
 	}
 
@@ -859,8 +855,6 @@ trimmed_combine_double(PG_FUNCTION_ARGS)
 
 	/* free the two arrays */
 	pfree(state1->elements);
-	pfree(state2->elements);
-
 	state1->elements = tmp;
 
 	/* and finally remember the current number of elements */
@@ -906,10 +900,6 @@ trimmed_combine_int32(PG_FUNCTION_ARGS)
 
 		MemoryContextSwitchTo(old_context);
 
-		/* free the internal state */
-		pfree(state2->elements);
-		state2->elements = NULL;
-
 		PG_RETURN_POINTER(state1);
 	}
 
@@ -950,8 +940,6 @@ trimmed_combine_int32(PG_FUNCTION_ARGS)
 
 	/* free the two arrays */
 	pfree(state1->elements);
-	pfree(state2->elements);
-
 	state1->elements = tmp;
 
 	/* and finally remember the current number of elements */
@@ -997,10 +985,6 @@ trimmed_combine_int64(PG_FUNCTION_ARGS)
 
 		MemoryContextSwitchTo(old_context);
 
-		/* free the internal state */
-		pfree(state2->elements);
-		state2->elements = NULL;
-
 		PG_RETURN_POINTER(state1);
 	}
 
@@ -1041,8 +1025,6 @@ trimmed_combine_int64(PG_FUNCTION_ARGS)
 
 	/* free the two arrays */
 	pfree(state1->elements);
-	pfree(state2->elements);
-
 	state1->elements = tmp;
 
 	/* and finally remember the current number of elements */
@@ -1148,8 +1130,6 @@ trimmed_combine_numeric(PG_FUNCTION_ARGS)
 
 	/* free the two arrays */
 	pfree(state1->data);
-	pfree(state2->data);
-
 	state1->data = data;
 
 	/* and finally remember the current number of elements */
