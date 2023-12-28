@@ -665,7 +665,7 @@ trimmed_deserial_double(PG_FUNCTION_ARGS)
 {
 	state_double *out = (state_double *)palloc(sizeof(state_double));
 	bytea  *state = (bytea *)PG_GETARG_POINTER(0);
-	Size	len = VARSIZE_ANY_EXHDR(state);
+	Size	len PG_USED_FOR_ASSERTS_ONLY = VARSIZE_ANY_EXHDR(state);
 	char   *ptr = VARDATA(state);
 
 	CHECK_AGG_CONTEXT("trimmed_deserial_double", fcinfo);
@@ -695,7 +695,7 @@ trimmed_deserial_int32(PG_FUNCTION_ARGS)
 {
 	state_int32 *out = (state_int32 *)palloc(sizeof(state_int32));
 	bytea  *state = (bytea *)PG_GETARG_POINTER(0);
-	Size	len = VARSIZE_ANY_EXHDR(state);
+	Size	len PG_USED_FOR_ASSERTS_ONLY = VARSIZE_ANY_EXHDR(state);
 	char   *ptr = VARDATA(state);
 
 	CHECK_AGG_CONTEXT("trimmed_deserial_int32", fcinfo);
@@ -724,8 +724,8 @@ Datum
 trimmed_deserial_int64(PG_FUNCTION_ARGS)
 {
 	state_int64 *out = (state_int64 *)palloc(sizeof(state_int64));
-	bytea  *state = (bytea *)PG_GETARG_POINTER(0);
-	Size	len = VARSIZE_ANY_EXHDR(state);
+	bytea  *state = (bytea *) PG_GETARG_POINTER(0);
+	Size	len PG_USED_FOR_ASSERTS_ONLY = VARSIZE_ANY_EXHDR(state);
 	char   *ptr = VARDATA(state);
 
 	CHECK_AGG_CONTEXT("trimmed_deserial_int64", fcinfo);
