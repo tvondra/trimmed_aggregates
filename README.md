@@ -1,5 +1,8 @@
 Trimmed aggregates
 ==================
+
+[![make installcheck](https://github.com/tvondra/trimmed_aggregates/actions/workflows/ci.yml/badge.svg)](https://github.com/tvondra/trimmed_aggregates/actions/workflows/ci.yml)
+
 This PostgreSQL extension provides several aggregate functions that
 trim the input data set before applying the function, i.e. remove
 lowest/highest values. The number of values to be removed is configured
