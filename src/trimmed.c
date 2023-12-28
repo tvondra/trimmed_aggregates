@@ -2633,125 +2633,71 @@ int64_comparator(const void *a, const void *b)
 static int
 numeric_comparator(const void *a, const void *b)
 {
-	FunctionCallInfoData fcinfo;
-
-	/* set params */
-	fcinfo.nargs = 2;
-	fcinfo.arg[0] = NumericGetDatum(*(Numeric*)a);
-	fcinfo.arg[1] = NumericGetDatum(*(Numeric*)b);
-	fcinfo.argnull[0] = false;
-	fcinfo.argnull[1] = false;
-
-	/* return the result */
-	return DatumGetInt32(numeric_cmp(&fcinfo));
+	return DatumGetInt32(
+			DirectFunctionCall2(numeric_cmp,
+								NumericGetDatum(* (Numeric *) a),
+								NumericGetDatum(* (Numeric *) b)));
 }
 
 static Numeric
 create_numeric(int value)
 {
-	FunctionCallInfoData fcinfo;
-
-	/* set params */
-	fcinfo.nargs = 1;
-	fcinfo.arg[0] = Int32GetDatum(value);
-	fcinfo.argnull[0] = false;
-
-	/* return the result */
-	return DatumGetNumeric(int4_numeric(&fcinfo));
+	return DatumGetNumeric(
+			DirectFunctionCall1(int4_numeric,
+								Int32GetDatum(value)));
 }
 
 static Numeric
 add_numeric(Numeric a, Numeric b)
 {
-	FunctionCallInfoData fcinfo;
-
-	/* set params */
-	fcinfo.nargs = 2;
-	fcinfo.arg[0] = NumericGetDatum(a);
-	fcinfo.arg[1] = NumericGetDatum(b);
-	fcinfo.argnull[0] = false;
-	fcinfo.argnull[1] = false;
-
-	/* return the result */
-	return DatumGetNumeric(numeric_add(&fcinfo));
+	return DatumGetNumeric(
+			DirectFunctionCall2(numeric_add,
+								NumericGetDatum(a),
+								NumericGetDatum(b)));
 }
 
 static Numeric
 div_numeric(Numeric a, Numeric b)
 {
-	FunctionCallInfoData fcinfo;
-
-	/* set params */
-	fcinfo.nargs = 2;
-	fcinfo.arg[0] = NumericGetDatum(a);
-	fcinfo.arg[1] = NumericGetDatum(b);
-	fcinfo.argnull[0] = false;
-	fcinfo.argnull[1] = false;
-
-	/* return the result */
-	return DatumGetNumeric(numeric_div(&fcinfo));
+	return DatumGetNumeric(
+			DirectFunctionCall2(numeric_div,
+								NumericGetDatum(a),
+								NumericGetDatum(b)));
 }
 
 static Numeric
 mul_numeric(Numeric a, Numeric b)
 {
-	FunctionCallInfoData fcinfo;
-
-	/* set params */
-	fcinfo.nargs = 2;
-	fcinfo.arg[0] = NumericGetDatum(a);
-	fcinfo.arg[1] = NumericGetDatum(b);
-	fcinfo.argnull[0] = false;
-	fcinfo.argnull[1] = false;
-
-	/* return the result */
-	return DatumGetNumeric(numeric_mul(&fcinfo));
+	return DatumGetNumeric(
+			DirectFunctionCall2(numeric_mul,
+								NumericGetDatum(a),
+								NumericGetDatum(b)));
 }
 
 static Numeric
 sub_numeric(Numeric a, Numeric b)
 {
-	FunctionCallInfoData fcinfo;
-
-	/* set params */
-	fcinfo.nargs = 2;
-	fcinfo.arg[0] = NumericGetDatum(a);
-	fcinfo.arg[1] = NumericGetDatum(b);
-	fcinfo.argnull[0] = false;
-	fcinfo.argnull[1] = false;
-
-	/* return the result */
-	return DatumGetNumeric(numeric_sub(&fcinfo));
+	return DatumGetNumeric(
+			DirectFunctionCall2(numeric_sub,
+								NumericGetDatum(a),
+								NumericGetDatum(b)));
 }
 
 static Numeric
 pow_numeric(Numeric a, int b)
 {
-	FunctionCallInfoData fcinfo;
-
-	/* set params */
-	fcinfo.nargs = 2;
-	fcinfo.arg[0] = NumericGetDatum(a);
-	fcinfo.arg[1] = NumericGetDatum(create_numeric(b));
-	fcinfo.argnull[0] = false;
-	fcinfo.argnull[1] = false;
-
-	/* return the result */
-	return DatumGetNumeric(numeric_power(&fcinfo));
+	return DatumGetNumeric(
+			DirectFunctionCall2(numeric_power,
+								NumericGetDatum(a),
+								NumericGetDatum(create_numeric(b))));
 }
 
 static Numeric
 sqrt_numeric(Numeric a)
 {
-	FunctionCallInfoData fcinfo;
-
-	/* set params */
-	fcinfo.nargs = 1;
-	fcinfo.arg[0] = NumericGetDatum(a);
-	fcinfo.argnull[0] = false;
-
-	/* return the result */
-	return DatumGetNumeric(numeric_sqrt(&fcinfo));
+	return DatumGetNumeric(
+			DirectFunctionCall1(numeric_sqrt,
+								NumericGetDatum(a)));
 }
 
 
@@ -2775,8 +2721,7 @@ double_to_array(FunctionCallInfo fcinfo, double * d, int len)
 								  CurrentMemoryContext);
 	}
 
-	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate,
-										  CurrentMemoryContext));
+	return makeArrayResult(astate, CurrentMemoryContext);
 }
 
 static Datum
@@ -2796,8 +2741,7 @@ numeric_to_array(FunctionCallInfo fcinfo, Numeric * d, int len)
 
 	}
 
-	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate,
-										  CurrentMemoryContext));
+	return makeArrayResult(astate, CurrentMemoryContext);
 }
 
 static void
