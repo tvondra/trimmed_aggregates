@@ -3,7 +3,7 @@ BEGIN;
 
 -- disable the notices for the create script (shell types etc.)
 SET client_min_messages = 'WARNING';
-\i sql/trimmed_aggregates--2.0.0.sql
+\i sql/trimmed_aggregates--2.0.0-dev.sql
 SET client_min_messages = 'NOTICE';
 
 \set ECHO all

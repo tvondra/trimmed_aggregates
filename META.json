@@ -2,7 +2,7 @@
    "name": "trimmed_aggregates",
    "abstract": "Aggregate for computing trimmed avg/stddev/var (with outliers removed).",
    "description": "An extension written in C that allows you to remove outliers before computing the basic statistical aggregates (AVG/STDDEV/VARIANCE).",
-   "version": "2.0.0",
+   "version": "2.0.0-dev",
    "maintainer": "Tomas Vondra <tv@fuzzy.cz>",
    "license": "bsd",
    "prereqs": {
@@ -16,7 +16,7 @@
      "trimmed_aggregates": {
        "file": "sql/trimmed_aggregates--2.0.0.sql",
        "docfile": "README.md",
-       "version": "2.0.0"
+       "version": "2.0.0-dev"
      }
    },
    "resources": {
@@ -31,5 +31,5 @@
       "version": "1.0.0",
       "url": "http://pgxn.org/meta/spec.txt"
    },
-   "release_status" : "stable"
+   "release_status" : "testing"
 }
